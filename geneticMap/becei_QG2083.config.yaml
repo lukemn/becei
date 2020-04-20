@@ -1,0 +1,8 @@
+reference: ref/genome.fa
+fastqfile: reads.txt
+callParentalSNPs: 1
+priors:
+    p1p1: 0.0
+    p1p2: 0.5
+    p2p2: 0.5
+

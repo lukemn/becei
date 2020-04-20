@@ -1,0 +1,289 @@
+#!/bin/bash
+
+import pandas as pd
+import numpy as np
+from os import path, getcwd
+from os.path import basename
+from sys import stderr
+
+configfile: "config.yaml"
+# define fastqfile: 
+#     sampletype (parents, rils), sample handle, fastq paths (r1, r2)
+# msg priors
+#     expected p1p1, p1p2, p2p2 proportions (p1=reference)
+# callParentalSNPs (if 0, provide parental.vcf and parental_snps.vcf)
+callParentalSNPs = int(config['callParentalSNPs'])
+# read mapper (bwa or bwa-mem2)
+mapper = config['mapper']
+# output pref for filtered map files (within rqtl)
+wd = getcwd()
+pref = basename(wd)
+
+if mapper == "bwa-mem2":
+    bwt=config['reference']+".bwt.2bit.64"
+else:
+    bwt=config['reference']+".bwt"
+    
+def checkExternalDependencies():
+    shell("which minimap2 &> /dev/null")
+    shell("which samtools &> /dev/null")
+    shell("which {} &> /dev/null".format(mapper))    
+    shell("which bcftools &> /dev/null")    
+    shell("which Rscript &> /dev/null")
+    shell("which bedtools &> /dev/null")
+
+checkExternalDependencies()
+
+samples = pd.read_csv(config['fastqfile'], sep='\t').set_index("sample", drop=False)
+parentreads = samples.loc[samples['sampletype']=='parents',]
+parentsamples = parentreads['sample'].values.tolist()
+rilreads = samples.loc[samples['sampletype']=='rils',]
+rilsamples = rilreads['sample'].values.tolist()
+rilstr = ','.join(rilsamples)
+priorstr = ','.join([str(i) for i in config['priors'].values()])
+allsamples = samples['sample'].values
+
+def sampleDirs(samples):
+    """
+    touch samples, sampletypes
+    """
+    stypes = pd.unique(samples['sampletype'])
+    for i in stypes:
+        shell("mkdir -p samples/"+i)
+        si = samples['sample'][samples['sampletype']==i].tolist()
+        for j in si:
+            pij=path.join('samples',i,j)
+            if not path.exists(pij):
+                shell("touch "+pij)
+
+sampleDirs(samples)
+
+def getReads(wildcards):
+    """
+    get arbitrary number/type of read paths as string
+    """
+    i=samples.loc[samples['sample']==wildcards.sample, samples.columns[2:]]
+    i=i.values.tolist()[0]
+    i=' '.join([l for l in i if str(l) != 'nan'])
+    return(i)
+
+rule all:
+    input:
+        expand("bam/parents/{sample}.stats", sample=parentsamples),
+        expand("pileup/{sample}.pup", sample=rilsamples),
+        expand("hmm_data/{sample}.hmmdata", sample=rilsamples),        
+        expand("hmm_fit/{sample}.hmmprob.txt", sample=rilsamples),
+        "rqtl/riself.rqtl.dat.bin50.rda",
+        "rqtl/{}_q90_bestOrders_LL.rda".format(pref),
+        "rqtl/{}_q90_rimap_2.rda".format(pref),
+        "rqtl/{}_q90_rimap_3.rda".format(pref)        
+
+rule index_ref:
+    input:
+        config['reference']
+    output:
+        "ref/genome.fa.fai",
+        bwt
+    shell:
+        "samtools faidx {input} && {mapper} index {input}"
+        
+rule map_reads:
+    input:
+        "samples/{sampletype}/{sample}",
+        bwt,
+        ref=config['reference']
+    output:
+        temp("bam/{sampletype}/{sample}.bam")
+    params:
+        rg=r"@RG\tID:{sample}\tSM:{sample}",
+        reads=getReads
+    threads: 20
+    log:
+        "bam/{sampletype}/{sample}.log"
+    shell: 
+        "{mapper} mem -t {threads} -R '{params.rg}' {input.ref} "
+        "{params.reads} | samtools view -b - > {output} 2> {log}"
+
+rule samtools_sort:
+    input:
+        "bam/{sampletype}/{sample}.bam"
+    output:
+        "bam/{sampletype}/{sample}_sorted.bam"
+    threads: 8
+    resources:
+        mem_mb=2000
+    shell:
+        "samtools sort -m {resources.mem_mb}M -@ {threads} "
+        "-T bam/{wildcards.sampletype}/{wildcards.sample} "
+        "-O bam {input} > {output}"
+        
+rule samtools_index:
+    input: 
+        ref=config['reference'],
+        bam="bam/{sampletype}/{sample}_sorted.bam"
+    output:
+        "bam/{sampletype}/{sample}_sorted.bam.bai"
+    shell:
+        "samtools index {input.bam}"
+
+rule parental_aln_stats:
+    input:
+        bwt,
+        ref=config['reference'],
+        bam="bam/parents/{sample}_sorted.bam",
+        bai="bam/parents/{sample}_sorted.bam.bai"
+    output:
+        "bam/parents/{sample}.stats"
+    shell:
+        "samtools stats {input.bam} > {output}"
+
+rule bcftools_call_snps:
+    # call diallelic snps in parents, if not provided
+    input:
+        ref=config['reference'],
+        bam=expand("bam/parents/{sample}_sorted.bam", sample=parentsamples),
+        bai=expand("bam/parents/{sample}_sorted.bam.bai", sample=parentsamples),
+        stats=expand("bam/parents/{sample}.stats", sample=parentsamples)
+    output:
+        "calls/parental.vcf"
+    params:
+        sOrder=','.join(parentsamples)
+    threads: 8
+    log:
+        "calls/log"
+    run:
+        cmd=("bcftools mpileup -A -f {input.ref} {input.bam} | " 
+            "bcftools call --threads {threads} -s {params.sOrder} -mv - " 
+            "> {output} 2> {log}")
+        print(cmd)
+        if callParentalSNPs:
+            shell(cmd)
+        elif not path.exists(output[0]):
+            stderr.write("callParentalSNPs=0, where is {}?".format(output[0]))        
+
+rule bcftools_filter_snps:
+    # filter parent snps, if not provided
+    input:
+        "calls/parental.vcf"
+    output:
+        "calls/parental_snps.vcf"
+    run:
+        if callParentalSNPs:
+            shell("scripts/bcftools_filter.sh {input} > {output}")
+        elif not path.exists(output[0]):
+            stderr.write("callParentalSNPs=0, where is {}?".format(output[0]))        
+        
+rule make_bed:
+    # make bed file of filtered snp positions
+    # removing regions with >1 SNP per 20bp
+    input:        
+        "calls/parental_snps.vcf"
+    output:
+        "calls/snp.sites.bed"
+    shell:
+        """
+        bedtools merge -d 10 -c 4,5 -o collapse -i {input} | 
+        awk '(length($4)==1 && length($5)==1)' > {output}
+        """
+        
+rule setup_hmm_dir:
+    input:
+        ref=config['reference'],
+        index="ref/genome.fa.fai",
+        snps="calls/parental_snps.vcf",
+        bed="calls/snp.sites.bed"
+    output:
+        "msg.chrLengths",
+        "hmm_data/refs/par1/par1.alleles",
+        "hmm_data/refs/par2/par2.alleles" 
+    log:
+        "variants.log"
+    shell:
+        "scripts/init_hmm.sh {input.ref} {input.snps} &> {log}"
+
+rule genotype:
+    input:
+        "msg.chrLengths",    
+        ref=config['reference'],
+        snps="calls/snp.sites.bed",
+        bam="bam/rils/{sample}_sorted.bam"  ,
+        bai="bam/rils/{sample}_sorted.bam.bai"
+    output:
+        "pileup/{sample}.pup"
+    shell:
+        "samtools mpileup -f {input.ref} -l {input.snps} {input.bam} > {output}"
+
+rule parse_pileups:
+    input:
+        "msg.chrLengths",
+        "hmm_data/refs/par1/par1.alleles",
+        "hmm_data/refs/par2/par2.alleles",
+        "pileup/{sample}.pup"
+    output:
+        "hmm_data/{sample}.hmmdata"
+    params:
+        priors=priorstr
+    log:
+        "hmm_data/{sample}.log"
+    threads: 2
+    shell:
+        "scripts/run-hmm-lmn.R -i {wildcards.sample} -t {threads} -z {params.priors} -j 1 &> {log}"
+
+rule infer_ancestries:
+    input:
+        "msg.chrLengths",
+        "hmm_data/refs/par1/par1.alleles",
+        "hmm_data/refs/par2/par2.alleles",
+        "hmm_data/{sample}.hmmdata"
+    output:
+        "hmm_fit/{sample}.hmmprob.txt"
+    params:
+        priors=priorstr
+    log:
+        "hmm_fit/{sample}.log"
+    threads: 2
+    shell:
+        "scripts/run-hmm-lmn.R -i {wildcards.sample} -t {threads} -z {params.priors} -j 2 &> {log}"
+
+rule make_rqtl:
+    input:
+        "msg.chrLengths",
+        expand("hmm_fit/{sample}.hmmprob.txt", sample=rilsamples)
+    output:
+        "rqtl/pheno.csv",
+        "rqtl/pmap.riself.bin50.csv",
+        "rqtl/geno.riself.bin50.csv",   
+        "rqtl/riself.rqtl.dat.bin50.rda",
+        "rqtl/reorderedSeq.csv",
+        "rqtl/bin50.markerpos.txt"        
+    params:
+        ids=rilstr,
+        priors=priorstr
+    log:
+        "rqtl/log"
+    threads: 20
+    shell:
+        "scripts/run-hmm-lmn.R -i {params.ids} -t {threads} -z {params.priors} -j 3 &> {log}"
+
+rule filter_map:
+    input:
+        "rqtl/pheno.csv",
+        "rqtl/geno.riself.bin50.csv",   
+        "rqtl/pmap.riself.bin50.csv",
+        "rqtl/riself.rqtl.dat.bin50.rda",
+        "rqtl/reorderedSeq.csv",
+        "rqtl/bin50.markerpos.txt"
+    output:
+        "rqtl/{pref}_RF_LOD.png",
+        "rqtl/{pref}_rimap_1.rda",
+        "rqtl/{pref}_q90_bestOrders_LL.rda",        
+        "rqtl/{pref}_q90_rimap_2.rda",
+        "rqtl/{pref}_q90_rimap_3.rda"
+    threads:
+        20
+    log:
+        "rqtl/{pref}_crossFilter.log"
+    shell:
+        "scripts/crossFilter.R {wd}/rqtl {threads} > {log}"
+
+
