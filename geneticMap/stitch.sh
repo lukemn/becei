@@ -399,7 +399,7 @@ done
 # pseudochromosome
 # make 68-41 join, patch all others
 ~/bin/seqtk/seqtk seq -r ptg000028l.fa | grep -v ">" > tmp
-echo "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN" >> tmp
+echo "  " >> tmp
 echo -e "ptg000068l\t1\t1601494" | bedtools getfasta -fi ptg000068l.fa -bed - |\
     grep -v ">" >> tmp
 echo -e "ptg000041l\t5000\t2263744" | bedtools getfasta -fi ptg000041l_rc.fa -bed - |\
@@ -536,12 +536,21 @@ done
 # 6
 # CHROMOSOME_IV 209037
 
-fastaSubsetSingle.py "LG1" polished.fa | sed 's/LG1/V/' > out1.fa
+# dominant strand
+for i in {1..6}; do 
+    echo $i
+    ctg=$(printf '|%s' $(awk -v L=$i '($7==L)' $BED | cut -f1) | cut -c2-)
+    grep -E $ctg NIC58_WS220.paf | awk '($3>($2*0.25) && $4<($2*0.75))' |\
+        awk '{a[$5]+=$11} END {for (i in a) print i, a[i]}' | sort -k2,2gr
+done
+
+
+fastaSubsetSingle.py "LG1" polished.fa | sed 's/LG1/V/' > out5.fa
 fastaSubsetSingle.py "LG2" polished.fa | sed 's/LG2/II/' > out2.fa
-fastaSubsetSingle.py "LG3" polished.fa | sed 's/LG3/I/' > out3.fa
-fastaSubsetSingle.py "LG4" polished.fa | sed 's/LG4/X/' > out4.fa
-fastaSubsetSingle.py "LG5" polished.fa | sed 's/LG5/III/' > out5.fa
-fastaSubsetSingle.py "LG6" polished.fa | sed 's/LG6/IV/' > out6.fa
+fastaSubsetSingle.py "LG3" polished.fa | sed 's/LG3/I/' > out1.fa
+fastaSubsetSingle.py "LG4" polished.fa | sed 's/LG4/X/' > out6.fa
+fastaSubsetSingle.py "LG5" polished.fa | sed 's/LG5/III/' > out3.fa
+fastaSubsetSingle.py "LG6" polished.fa | sed 's/LG6/IV/' > out4.fa
 cat out*.fa > QG2082_genome_15022021.fa
 
 

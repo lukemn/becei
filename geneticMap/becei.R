@@ -308,6 +308,11 @@ gmap <- function(){
     theme(legend.position = 'top', axis.line = element_blank(), strip.background = element_blank(), panel.border = element_rect(fill = NA), panel.spacing = unit(1, 'mm'), legend.margin = margin(0, 0, -5, 0))
   ggsave('~/Documents/github/becei/geneticMap/marey.pdf', h=4, w=8)
   
+  p <- ggplot(mapdf, aes(start/1e6, genetic)) + geom_point(size=1, alpha=.75, stroke=0) + facet_grid(.~chrom, scales = 'free') + theme_classic() + 
+    labs(x='Physical distance (Mb)', y='Genetic distance (cM)') + scale_x_continuous(n.breaks = 3) +
+    theme(legend.position = 'top', axis.line = element_blank(), strip.background = element_blank(), panel.border = element_rect(fill = NA), panel.spacing = unit(1, 'mm'), legend.margin = margin(0, 0, -5, 0))
+  ggsave('~/Documents/github/becei/geneticMap/marey_fixed.pdf', h=4, w=8)
+  
   save(cross, mapdf, dupes, file = '~/Documents/github/becei/geneticMap/becei_geneticMap.RData')
   
   
