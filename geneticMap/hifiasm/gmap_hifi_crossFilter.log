@@ -1,0 +1,1070 @@
+##
+Reading in cross, assembly and marker info
+##
+[1] "Wed Jan 20 16:35:47 2021"
+[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+[1] 7
+[1] 8
+[1] 9
+[1] 10
+[1] 11
+[1] 12
+[1] 13
+[1] 14
+[1] 15
+[1] 16
+[1] 17
+[1] 18
+[1] 19
+[1] 20
+[1] 21
+[1] 22
+[1] 23
+[1] 24
+ --Read the following data:
+	 101  individuals
+	 7531  markers
+	 2  phenotypes
+ --Cross type: riself 
+dropping 3 terminal markers
+##
+Dedupe and filtering
+##
+collapse 6990 dupes to 500 tags (spanning 92.97 Mb), 94.17 covered by all 21 marker scaffolds
+dropping 4 lines due to high similarity (>0.950)
+    RI strains via selfing
+
+    No. individuals:    97 
+
+    No. phenotypes:     2 
+    Percent phenotyped: 100 100 
+
+    No. chromosomes:    18 
+        Autosomes:      Ctg001 Ctg002 Ctg003 Ctg004 Ctg005 Ctg006 Ctg007 Ctg008 
+                        Ctg011 Ctg012 Ctg013 Ctg014 Ctg015 Ctg016 Ctg017 Ctg018 
+                        Ctg019 Ctg041 
+
+    Total markers:      538 
+    No. markers:        74 53 53 48 17 28 55 40 33 43 25 29 3 13 5 2 16 1 
+    Percent genotyped:  99.9 
+    Genotypes (%):      AA:43.3  BB:56.7 
+##
+Form linkage groups
+##
+No apparent problems.
+   lod  n     sixes minlg maxdross
+1   13  7 0.9981413    79        1
+2   14  7 0.9981413    79        1
+3   15  8 0.9962825    79        1
+4   16  8 0.9962825    79        1
+5   17  8 0.9962825    79        1
+6   18  8 0.9962825    79        1
+7   19  8 0.9962825    79        1
+8   20  8 0.9962825    79        1
+9   21 10 0.8884758    61       43
+10  22 16 0.7918216    43       39
+
+using minimum LOD 13
+538 markers in 6 non-singleton LGs
+##
+Saving filtered cross data
+##
+[1] "ML error rate ... "
+[1] 0.001162183
+XOs (median 10)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   2.00    8.00   10.00   10.82   13.00   53.00 
+XOs > 99% MAD
+B1_10 
+   53 
+        n.mar length ave.spacing max.spacing
+1         104  115.5         1.1         5.8
+2          96   89.0         0.9         5.8
+3          91   89.4         1.0        17.4
+4          84   72.6         0.9         5.1
+5          83  108.8         1.3        39.6
+6          79   67.9         0.9        18.1
+7           1    0.0          NA          NA
+overall   538  543.2         1.0        39.6
+##
+Iterating within LG marker ordering
+##
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.4667  1.0467  1.4433  1.5982  1.8167  8.9367 
+improvement in LL after 50 iterations (1 XO quantile, 97 lines):
+[1] -270.29240 -163.54472    0.00000 -180.37775 -150.15175  -27.83007
+  n.mar length ave.spacing max.spacing
+1   104  115.5         1.1         5.8
+2    96   89.0         0.9         5.8
+3    91   89.4         1.0        17.4
+4    84   72.6         0.9         5.1
+5    83  108.8         1.3        39.6
+6    79   67.9         0.9        18.1
+  n.mar length ave.spacing max.spacing
+1   104   63.2         0.6         2.7
+2    96   57.0         0.6         2.2
+3    91   89.4         1.0        17.4
+4    84   41.6         0.5         1.6
+5    83   53.4         0.7         2.7
+6    79   51.7         0.7         2.2
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.510   1.293   1.713   1.857   2.200   8.960 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.3333  1.2100  1.4950  1.6580  1.9617  6.0300 
+improvement in LL after 50 iterations (0.99 XO quantile, 96 lines):
+[1]   0.000000 -56.234080 -50.776231   0.000000  -7.466866 -28.115519
+  n.mar length ave.spacing max.spacing
+1   104   63.2         0.6         2.7
+2    96   57.0         0.6         2.2
+3    91   89.4         1.0        17.4
+4    84   41.6         0.5         1.6
+5    83   53.4         0.7         2.7
+6    79   51.7         0.7         2.2
+  n.mar length ave.spacing max.spacing
+1   104   63.2         0.6         2.7
+2    96   54.1         0.6         2.2
+3    91   85.1         0.9        17.9
+4    84   41.6         0.5         1.6
+5    83   54.0         0.7         2.8
+6    79   50.8         0.7         2.2
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.3333  1.2233  1.6383  1.6983  1.9817  6.2600 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.3333  1.1183  1.4100  1.4517  1.7783  2.6333 
+improvement in LL after 50 iterations (0.95 XO quantile, 91 lines):
+[1] -201.22472 -105.13584  -50.48746  -71.34463  -50.49958  -67.05450
+  n.mar length ave.spacing max.spacing
+1   104   63.2         0.6         2.7
+2    96   54.1         0.6         2.2
+3    91   85.1         0.9        17.9
+4    84   41.6         0.5         1.6
+5    83   54.0         0.7         2.8
+6    79   50.8         0.7         2.2
+  n.mar length ave.spacing max.spacing
+1   104   54.0         0.5         2.3
+2    96   51.0         0.5         2.3
+3    91   85.4         0.9        18.2
+4    84   41.3         0.5         1.1
+5    83   54.3         0.7         2.9
+6    79   48.0         0.6         2.3
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.3333  1.0850  1.3900  1.4314  1.7433  2.6100 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.6333  1.1583  1.3817  1.4215  1.7350  2.1767 
+improvement in LL after 50 iterations (0.9 XO quantile, 82 lines):
+[1] -55.09982 -60.96544 -95.39316 -66.19216 -53.04794 -79.02506
+  n.mar length ave.spacing max.spacing
+1   104   54.0         0.5         2.3
+2    96   51.0         0.5         2.3
+3    91   85.4         0.9        18.2
+4    84   41.3         0.5         1.1
+5    83   54.3         0.7         2.9
+6    79   48.0         0.6         2.3
+  n.mar length ave.spacing max.spacing
+1   104   55.9         0.5         2.6
+2    96   51.8         0.5         2.6
+3    91   77.7         0.9        15.3
+4    84   41.1         0.5         1.3
+5    83   56.0         0.7         1.9
+6    79   45.4         0.6         2.6
+gmap_hifi_q100 Test full reordering by physical distance
+gmap_hifi_q100: Of 17 contigs in the map, 0 are unorientable, 7 are discordant (spanning 0 and 44226400 bp)
+gmap_hifi_q100 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int [1:39] 16 1 1 1 24 1 1 1 1 1 ...
+  values : int [1:39] 1 2 -1 2 1 2 -1 3 -1 2 ...
+
+[[2]]
+Run Length Encoding
+  lengths: int [1:26] 1 1 3 1 1 1 1 13 1 1 ...
+  values : int [1:26] -2 -1 2 -1 3 -1 2 1 2 -1 ...
+
+[[3]]
+Run Length Encoding
+  lengths: int [1:23] 1 1 1 1 1 1 1 15 1 1 ...
+  values : int [1:23] 1 2 -1 3 1 -2 3 1 2 -1 ...
+
+[[4]]
+Run Length Encoding
+  lengths: int [1:17] 12 1 1 1 5 1 1 1 19 1 ...
+  values : int [1:17] 1 2 -1 2 1 2 -1 2 1 2 ...
+
+[[5]]
+Run Length Encoding
+  lengths: int [1:11] 2 1 28 1 1 1 26 1 1 1 ...
+  values : int [1:11] -1 3 1 2 -1 2 1 2 -1 2 ...
+
+[[6]]
+Run Length Encoding
+  lengths: int [1:14] 1 1 11 1 1 1 55 1 1 1 ...
+  values : int [1:14] -1 2 1 2 -1 2 1 2 -1 2 ...
+
+gmap_hifi_q100 likelihoods for new order
+LG 1: LOD -1.079, map length -3.953, order accepted
+LG 2: LOD 0.076, map length -0.581, order accepted
+LG 3: LOD 1.915, map length 2.894, order accepted
+LG 4: LOD -0.000, map length 0.000, order accepted
+LG 5: LOD -0.000, map length -0.000, order accepted
+LG 6: LOD -0.090, map length -0.265, order accepted
+gmap_hifi_q100: Of 17 contigs in the map, 0 are unorientable, 0 are discordant (spanning 0 and 0 bp)
+gmap_hifi_q100 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int 103
+  values : int 1
+
+[[2]]
+Run Length Encoding
+  lengths: int 95
+  values : int 1
+
+[[3]]
+Run Length Encoding
+  lengths: int 90
+  values : int 1
+
+[[4]]
+Run Length Encoding
+  lengths: int 83
+  values : int 1
+
+[[5]]
+Run Length Encoding
+  lengths: int 82
+  values : int 1
+
+[[6]]
+Run Length Encoding
+  lengths: int 78
+  values : int 1
+
+gmap_hifi_q100 likelihoods for new order
+LG 1: no change
+LG 2: no change
+LG 3: no change
+LG 4: no change
+LG 5: no change
+LG 6: no change
+gmap_hifi_q100 Test case-by-case reordering by physical distance
+        n.mar length ave.spacing max.spacing
+1         104   59.2         0.6         2.7
+2          96   56.4         0.6         2.2
+3          91   91.0         1.0        23.7
+4          84   41.6         0.5         1.6
+5          83   53.4         0.7         2.7
+6          79   51.4         0.7         2.2
+7           1    0.0          NA          NA
+overall   538  353.1         0.7        23.7
+Saving cross and map df to /scratch/lmn3/becei/gmap_hifi/rqtl/gmap_hifi_q100_rimap_2.rda
+gmap_hifi_q100 Add duplicate markers
+gmap_hifi_q100 Order duplicate markers
+	gmap_hifi_q100 failed: no simple resolution
+	gmap_hifi_q100 failed: no simple resolution
+LG 1: Ctg004 dupe split over 1 junction
+          marker genetic lg marker_scaf         dupe   start     end   scaf
+300 Ctg004.27001  33.972  1      Ctg004 Ctg004.27051 6178622 6193052 Ctg004
+301 Ctg004.27001  33.972  1      Ctg004        FALSE 6168348 6178571 Ctg004
+302 Ctg004.25351  34.429  1      Ctg004 Ctg004.27601 6353462 6363951 Ctg004
+      diff    cpos
+300  14481 3751207
+301 185380 3761481
+302  10504 3946595
+
+LG 1: Ctg008 dupe split over 4 junction
+        marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+924   Ctg004.1  38.076  1      Ctg004 Ctg008.1851 437541 444787 Ctg008   7370
+925   Ctg004.1  38.076  1      Ctg004 Ctg008.1901 445706 459390 Ctg008  14603
+926 Ctg008.201  38.403  1      Ctg008       FALSE  70260  81007 Ctg008 378383
+        cpos
+924 11208854
+925 11217019
+926 11592465
+
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+937 Ctg008.1951  38.927  1      Ctg008 Ctg008.2401 558861 566905 Ctg008   8131
+938 Ctg008.1951  38.927  1      Ctg008 Ctg008.2451 566963 591017 Ctg008  24112
+939 Ctg008.2051  38.928  1      Ctg008       FALSE 481785 487975 Ctg008 103042
+        cpos
+937 12081066
+938 12089168
+939 12174346
+
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+1075 Ctg008.5351  40.301  1      Ctg008 Ctg008.9601 2219158 2228566 Ctg008
+1076 Ctg008.5351  40.301  1      Ctg008 Ctg008.9651 2228586 2245313 Ctg008
+1077 Ctg008.6101  40.758  1      Ctg008 Ctg008.6051 1448038 1468385 Ctg008
+       diff     cpos
+1075   9438 13911719
+1076  16747 13921147
+1077 776928 14701695
+
+           marker genetic lg marker_scaf         dupe   start     end   scaf
+1283 Ctg008.18501  58.950  1      Ctg008 Ctg008.19651 4523169 4632338 Ctg008
+1284 Ctg008.18501  58.950  1      Ctg008 Ctg008.19701 4639614 4754758 Ctg008
+1285 Ctg008.18851  59.219  1      Ctg008        FALSE 4268254 4279648 Ctg008
+       diff     cpos
+1283 109182 17776826
+1284 122420 17893271
+1285 475110 18264631
+
+LG 1, span vs true span -2999314
+
+LG 2: Ctg012 dupe split over 1 junction
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+2124 Ctg012.601  30.272  2      Ctg012 Ctg012.1251 330031 338811 Ctg012   8795
+2125 Ctg012.601  30.272  2      Ctg012 Ctg012.1301 339055 346406 Ctg012   7595
+2126 Ctg012.751  30.604  2      Ctg012       FALSE 195184 204828 Ctg012 141578
+         cpos
+2124 10992496
+2125 11001520
+2126 11145391
+
+LG 2, span vs true span -275561
+
+LG 3: Ctg003 dupe split over 2 junction
+           marker genetic lg marker_scaf         dupe   start     end   scaf
+2375 Ctg003.31701   0.000  3      Ctg003        FALSE 8397649 8407002 Ctg003
+2376 Ctg003.31701   0.000  3      Ctg003 Ctg003.31651 8385993 8397553 Ctg003
+2377 Ctg003.31551   0.524  3      Ctg003 Ctg003.32601 8754037 8845370 Ctg003
+       diff   cpos
+2375   9449 107319
+2376 447817 118975
+2377  91413 487019
+
+           marker genetic lg marker_scaf         dupe   start     end   scaf
+2381 Ctg003.31551   0.524  3      Ctg003 Ctg003.31601 8379190 8385945 Ctg003
+2382 Ctg003.31551   0.524  3      Ctg003        FALSE 8372221 8379063 Ctg003
+2383 Ctg003.31301   0.788  3      Ctg003 Ctg003.32651 8849163 8858641 Ctg003
+       diff    cpos
+2381   6882  861866
+2382 479578  868835
+2383 171544 1345777
+
+LG 3: Ctg016 dupe split over 1 junction
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3031 Ctg003.51  35.721  3      Ctg003 Ctg016.8401 1992776 2006693 Ctg016
+3032 Ctg003.51  35.721  3      Ctg003 Ctg016.8451 2006841 2051638 Ctg016
+3238  Ctg016.1  76.566  3      Ctg016       FALSE     719   13989 Ctg016
+        diff     cpos
+3031   14405 12187716
+3032   44945 12201781
+3238 2037649 14857095
+
+LG 3: Ctg016 setting 2 sus diffs > 1Mb to NA
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3022 Ctg003.51  35.721  3      Ctg003         end       0     718 Ctg016
+3023 Ctg003.51  35.721  3      Ctg003 Ctg016.8001 1904891 1921449 Ctg016
+3024 Ctg003.51  35.721  3      Ctg003 Ctg016.8051 1921697 1931675 Ctg016
+        diff     cpos
+3022       0 10194940
+3023 1920731 12099831
+3024   10226 12116637
+
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3032 Ctg003.51  35.721  3      Ctg003 Ctg016.8451 2006841 2051638 Ctg016
+3238  Ctg016.1  76.566  3      Ctg016       FALSE     719   13989 Ctg016
+3239  Ctg016.1  76.566  3      Ctg016   Ctg016.51   14015   24941 Ctg016
+        diff     cpos
+3032      NA       NA
+3238 2037649 14857095
+3239   10952 14870391
+
+LG 3, span vs true span -645693
+
+LG 4: Ctg001 dupe split over 1 junction
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+5020 Ctg001.8501  30.908  4      Ctg001 Ctg001.8551 1250634 1255895 Ctg001
+5021 Ctg001.8501  30.908  4      Ctg001       FALSE 1243627 1250206 Ctg001
+5022 Ctg001.7801  31.429  4      Ctg001 Ctg001.8801 1286766 1298064 Ctg001
+      diff     cpos
+5020  5689 17619321
+5021 47858 17626328
+5022 11489 17669467
+
+LG 4: Ctg018 dupe split over 2 junction
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5427 Ctg015.1  40.855  4      Ctg015 Ctg018.4101 1475091 1516634 Ctg018   41637
+5428 Ctg015.1  40.855  4      Ctg015 Ctg018.4151 1516666 1531994 Ctg018   15360
+5429 Ctg018.1  41.371  4      Ctg018       FALSE   15054   80548 Ctg018 1451446
+         cpos
+5427 24752394
+5428 24793969
+5429 26295581
+
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+5506    Ctg018.1  41.371  4      Ctg018 Ctg018.3901 1435480 1442798 Ctg018
+5507    Ctg018.1  41.371  4      Ctg018 Ctg018.3951 1442988 1452416 Ctg018
+5508 Ctg018.2601  41.640  4      Ctg018       FALSE 1038546 1049244 Ctg018
+       diff     cpos
+5506   7376 27716007
+5507   9618 27723515
+5508 403172 28127957
+
+LG 4: Ctg018 setting 2 sus diffs > 1Mb to NA
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5424 Ctg015.1  40.855  4      Ctg015         end       0   15053 Ctg018       0
+5425 Ctg015.1  40.855  4      Ctg015 Ctg018.4001 1453093 1466838 Ctg018 1451785
+5426 Ctg015.1  40.855  4      Ctg015 Ctg018.4051 1466978 1474997 Ctg018    8159
+         cpos
+5424 23277303
+5425 24730396
+5426 24744281
+
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5428 Ctg015.1  40.855  4      Ctg015 Ctg018.4151 1516666 1531994 Ctg018      NA
+5429 Ctg018.1  41.371  4      Ctg018       FALSE   15054   80548 Ctg018 1451446
+5430 Ctg018.1  41.371  4      Ctg018   Ctg018.51   81328  158675 Ctg018   78127
+         cpos
+5428       NA
+5429 26295581
+5430 26361855
+
+LG 4, span vs true span -346135
+
+LG 5, span vs true span 0
+
+LG 6: Ctg011 dupe split over 2 junction
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+6590   Ctg011.1   0.000  6      Ctg011 Ctg011.2201 748367 756649 Ctg011   8428
+6591   Ctg011.1   0.000  6      Ctg011 Ctg011.2251 756757 768997 Ctg011  12348
+6592 Ctg011.751   0.525  6      Ctg011  Ctg011.701 430769 444916 Ctg011 324081
+        cpos
+6590  748368
+6591  756758
+6592 1082746
+
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+6637 Ctg011.3801   6.656  6      Ctg011 Ctg011.4701 1383120 1403331 Ctg011
+6638 Ctg011.3801   6.656  6      Ctg011 Ctg011.4751 1403557 1415765 Ctg011
+6639 Ctg011.4051   7.171  6      Ctg011       FALSE 1239070 1249408 Ctg011
+       diff    cpos
+6637  20224 2035097
+6638  12434 2055534
+6639 166357 2220021
+
+LG 6, span vs true span -956094
+
+gmap_hifi_q100 After duplicate and termini addition:
+98.19 Mb ordered (17 contig)
+1.13 Mb genetically unorderable (3 contig)
+0.00 Mb ambiguous (0 contig)
+vs. assembly span 94.10 Mb (5.22 off)
+20 contigsgmap_hifi_q99 Test full reordering by physical distance
+gmap_hifi_q99: Of 17 contigs in the map, 0 are unorientable, 5 are discordant (spanning 0 and 29705546 bp)
+gmap_hifi_q99 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int [1:39] 16 1 1 1 24 1 1 1 1 1 ...
+  values : int [1:39] 1 2 -1 2 1 2 -1 3 -1 2 ...
+
+[[2]]
+Run Length Encoding
+  lengths: int [1:33] 1 1 1 2 1 1 1 1 8 1 ...
+  values : int [1:33] 3 -2 1 2 -1 3 -1 2 1 2 ...
+
+[[3]]
+Run Length Encoding
+  lengths: int [1:28] 4 1 1 1 1 1 1 1 10 1 ...
+  values : int [1:28] 1 2 -1 2 1 2 -1 2 1 2 ...
+
+[[4]]
+Run Length Encoding
+  lengths: int [1:17] 12 1 1 1 5 1 1 1 19 1 ...
+  values : int [1:17] 1 2 -1 2 1 2 -1 2 1 2 ...
+
+[[5]]
+Run Length Encoding
+  lengths: int [1:9] 26 1 1 1 19 1 1 1 31
+  values : int [1:9] 1 2 -1 2 1 2 -1 2 1
+
+[[6]]
+Run Length Encoding
+  lengths: int [1:24] 1 1 16 1 1 1 1 1 1 1 ...
+  values : int [1:24] -1 2 1 2 -1 3 -1 3 -1 2 ...
+
+gmap_hifi_q99 likelihoods for new order
+LG 1: LOD 0.756, map length -0.798, order accepted
+LG 2: LOD 0.102, map length -0.687, order accepted
+LG 3: LOD 0.534, map length 3.262, order accepted
+LG 4: LOD -0.000, map length 0.000, order accepted
+LG 5: LOD 0.000, map length -0.000, order accepted
+LG 6: LOD -0.094, map length -0.271, order accepted
+gmap_hifi_q99: Of 17 contigs in the map, 0 are unorientable, 0 are discordant (spanning 0 and 0 bp)
+gmap_hifi_q99 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int 103
+  values : int 1
+
+[[2]]
+Run Length Encoding
+  lengths: int 95
+  values : int 1
+
+[[3]]
+Run Length Encoding
+  lengths: int 90
+  values : int 1
+
+[[4]]
+Run Length Encoding
+  lengths: int 83
+  values : int 1
+
+[[5]]
+Run Length Encoding
+  lengths: int 82
+  values : int 1
+
+[[6]]
+Run Length Encoding
+  lengths: int 78
+  values : int 1
+
+gmap_hifi_q99 likelihoods for new order
+LG 1: no change
+LG 2: no change
+LG 3: no change
+LG 4: no change
+LG 5: no change
+LG 6: no change
+gmap_hifi_q99 Test case-by-case reordering by physical distance
+        n.mar length ave.spacing max.spacing
+1         104   56.3         0.5         2.2
+2          96   53.4         0.6         2.2
+3          91   88.3         1.0        24.1
+4          84   42.1         0.5         1.6
+5          83   54.0         0.7         2.8
+6          79   50.5         0.6         2.2
+7           1    0.0          NA          NA
+overall   538  344.6         0.6        24.1
+Saving cross and map df to /scratch/lmn3/becei/gmap_hifi/rqtl/gmap_hifi_q99_rimap_2.rda
+gmap_hifi_q99 Add duplicate markers
+gmap_hifi_q99 Order duplicate markers
+	gmap_hifi_q99 failed: no simple resolution
+	gmap_hifi_q99 failed: no simple resolution
+LG 1: Ctg004 dupe split over 1 junction
+          marker genetic lg marker_scaf         dupe   start     end   scaf
+300 Ctg004.27001  33.309  1      Ctg004 Ctg004.27051 6178622 6193052 Ctg004
+301 Ctg004.27001  33.309  1      Ctg004        FALSE 6168348 6178571 Ctg004
+302 Ctg004.25351  33.772  1      Ctg004 Ctg004.27601 6353462 6363951 Ctg004
+      diff    cpos
+300  14481 3751207
+301 185380 3761481
+302  10504 3946595
+
+LG 1, span vs true span -185380
+
+LG 2: Ctg012 dupe split over 1 junction
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+2124 Ctg012.601  28.004  2      Ctg012 Ctg012.1251 330031 338811 Ctg012   8795
+2125 Ctg012.601  28.004  2      Ctg012 Ctg012.1301 339055 346406 Ctg012   7595
+2126 Ctg012.751  28.347  2      Ctg012       FALSE 195184 204828 Ctg012 141578
+         cpos
+2124 10992496
+2125 11001520
+2126 11145391
+
+LG 2, span vs true span -275561
+
+LG 3: Ctg003 dupe split over 1 junction
+           marker genetic lg marker_scaf         dupe   start     end   scaf
+2375 Ctg003.31701   0.000  3      Ctg003        FALSE 8397649 8407002 Ctg003
+2376 Ctg003.31701   0.000  3      Ctg003 Ctg003.31651 8385993 8397553 Ctg003
+2377 Ctg003.31301   0.525  3      Ctg003 Ctg003.32651 8849163 8858641 Ctg003
+       diff   cpos
+2375   9449 107319
+2376 461088 118975
+2377  13271 582145
+
+LG 3: Ctg016 dupe split over 1 junction
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3031 Ctg003.51  32.383  3      Ctg003 Ctg016.8401 1992776 2006693 Ctg016
+3032 Ctg003.51  32.383  3      Ctg003 Ctg016.8451 2006841 2051638 Ctg016
+3238  Ctg016.1  73.772  3      Ctg016       FALSE     719   13989 Ctg016
+        diff     cpos
+3031   14405 11424084
+3032   44945 11438149
+3238 2037649 14093463
+
+LG 3: Ctg016 setting 2 sus diffs > 1Mb to NA
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3022 Ctg003.51  32.383  3      Ctg003         end       0     718 Ctg016
+3023 Ctg003.51  32.383  3      Ctg003 Ctg016.8001 1904891 1921449 Ctg016
+3024 Ctg003.51  32.383  3      Ctg003 Ctg016.8051 1921697 1931675 Ctg016
+        diff     cpos
+3022       0  9431308
+3023 1920731 11336199
+3024   10226 11353005
+
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3032 Ctg003.51  32.383  3      Ctg003 Ctg016.8451 2006841 2051638 Ctg016
+3238  Ctg016.1  73.772  3      Ctg016       FALSE     719   13989 Ctg016
+3239  Ctg016.1  73.772  3      Ctg016   Ctg016.51   14015   24941 Ctg016
+        diff     cpos
+3032      NA       NA
+3238 2037649 14093463
+3239   10952 14106759
+
+LG 3, span vs true span -179386
+
+LG 4: Ctg001 dupe split over 1 junction
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+5020 Ctg001.8501  31.239  4      Ctg001 Ctg001.8551 1250634 1255895 Ctg001
+5021 Ctg001.8501  31.239  4      Ctg001       FALSE 1243627 1250206 Ctg001
+5022 Ctg001.7801  31.765  4      Ctg001 Ctg001.8801 1286766 1298064 Ctg001
+      diff     cpos
+5020  5689 17619321
+5021 47858 17626328
+5022 11489 17669467
+
+LG 4: Ctg018 dupe split over 2 junction
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5427 Ctg015.1  41.292  4      Ctg015 Ctg018.4101 1475091 1516634 Ctg018   41637
+5428 Ctg015.1  41.292  4      Ctg015 Ctg018.4151 1516666 1531994 Ctg018   15360
+5429 Ctg018.1  41.812  4      Ctg018       FALSE   15054   80548 Ctg018 1451446
+         cpos
+5427 24752394
+5428 24793969
+5429 26295581
+
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+5506    Ctg018.1  41.812  4      Ctg018 Ctg018.3901 1435480 1442798 Ctg018
+5507    Ctg018.1  41.812  4      Ctg018 Ctg018.3951 1442988 1452416 Ctg018
+5508 Ctg018.2601  42.088  4      Ctg018       FALSE 1038546 1049244 Ctg018
+       diff     cpos
+5506   7376 27716007
+5507   9618 27723515
+5508 403172 28127957
+
+LG 4: Ctg018 setting 2 sus diffs > 1Mb to NA
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5424 Ctg015.1  41.292  4      Ctg015         end       0   15053 Ctg018       0
+5425 Ctg015.1  41.292  4      Ctg015 Ctg018.4001 1453093 1466838 Ctg018 1451785
+5426 Ctg015.1  41.292  4      Ctg015 Ctg018.4051 1466978 1474997 Ctg018    8159
+         cpos
+5424 23277303
+5425 24730396
+5426 24744281
+
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5428 Ctg015.1  41.292  4      Ctg015 Ctg018.4151 1516666 1531994 Ctg018      NA
+5429 Ctg018.1  41.812  4      Ctg018       FALSE   15054   80548 Ctg018 1451446
+5430 Ctg018.1  41.812  4      Ctg018   Ctg018.51   81328  158675 Ctg018   78127
+         cpos
+5428       NA
+5429 26295581
+5430 26361855
+
+LG 4, span vs true span -346135
+
+LG 5, span vs true span 0
+
+LG 6: Ctg011 dupe split over 2 junction
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+6590   Ctg011.1   0.000  6      Ctg011 Ctg011.2201 748367 756649 Ctg011   8428
+6591   Ctg011.1   0.000  6      Ctg011 Ctg011.2251 756757 768997 Ctg011  12348
+6592 Ctg011.751   0.531  6      Ctg011  Ctg011.701 430769 444916 Ctg011 324081
+        cpos
+6590  748368
+6591  756758
+6592 1082746
+
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+6637 Ctg011.3801   6.731  6      Ctg011 Ctg011.4701 1383120 1403331 Ctg011
+6638 Ctg011.3801   6.731  6      Ctg011 Ctg011.4751 1403557 1415765 Ctg011
+6639 Ctg011.4051   7.252  6      Ctg011       FALSE 1239070 1249408 Ctg011
+       diff    cpos
+6637  20224 2035097
+6638  12434 2055534
+6639 166357 2220021
+
+LG 6, span vs true span -956094
+
+gmap_hifi_q99 After duplicate and termini addition:
+94.91 Mb ordered (17 contig)
+1.13 Mb genetically unorderable (3 contig)
+0.00 Mb ambiguous (0 contig)
+vs. assembly span 94.10 Mb (1.94 off)
+20 contigsgmap_hifi_q95 Test full reordering by physical distance
+gmap_hifi_q95: Of 17 contigs in the map, 0 are unorientable, 3 are discordant (spanning 0 and 10447364 bp)
+gmap_hifi_q95 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int [1:47] 16 1 2 1 19 1 1 1 1 1 ...
+  values : int [1:47] 1 3 -1 3 1 2 -1 2 1 2 ...
+
+[[2]]
+Run Length Encoding
+  lengths: int [1:41] 1 1 1 1 18 1 1 1 14 1 ...
+  values : int [1:41] 3 -2 1 2 1 2 -1 2 1 2 ...
+
+[[3]]
+Run Length Encoding
+  lengths: int [1:26] 1 2 2 1 1 14 1 1 1 1 ...
+  values : int [1:26] -3 1 2 -1 2 1 2 1 -2 4 ...
+
+[[4]]
+Run Length Encoding
+  lengths: int [1:12] 30 1 1 1 7 1 1 1 1 1 ...
+  values : int [1:12] 1 2 -1 2 1 2 -1 4 -2 1 ...
+
+[[5]]
+Run Length Encoding
+  lengths: int [1:21] 19 1 1 1 4 1 1 1 2 1 ...
+  values : int [1:21] 1 2 -1 2 1 2 -1 2 1 2 ...
+
+[[6]]
+Run Length Encoding
+  lengths: int [1:38] 1 1 1 1 1 1 2 1 1 1 ...
+  values : int [1:38] -1 2 1 2 -1 2 1 2 -1 2 ...
+
+gmap_hifi_q95 likelihoods for new order
+LG 1: LOD 0.000, map length -0.000, order accepted
+LG 2: LOD 0.000, map length -0.000, order accepted
+LG 3: LOD 0.488, map length 3.471, order accepted
+LG 4: LOD -0.000, map length -0.000, order accepted
+LG 5: LOD 0.000, map length 0.000, order accepted
+LG 6: LOD -0.002, map length -0.000, order accepted
+gmap_hifi_q95: Of 17 contigs in the map, 0 are unorientable, 0 are discordant (spanning 0 and 0 bp)
+gmap_hifi_q95 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int 103
+  values : int 1
+
+[[2]]
+Run Length Encoding
+  lengths: int 95
+  values : int 1
+
+[[3]]
+Run Length Encoding
+  lengths: int 90
+  values : int 1
+
+[[4]]
+Run Length Encoding
+  lengths: int 83
+  values : int 1
+
+[[5]]
+Run Length Encoding
+  lengths: int 82
+  values : int 1
+
+[[6]]
+Run Length Encoding
+  lengths: int 78
+  values : int 1
+
+gmap_hifi_q95 likelihoods for new order
+LG 1: no change
+LG 2: no change
+LG 3: no change
+LG 4: no change
+LG 5: no change
+LG 6: no change
+gmap_hifi_q95 Test case-by-case reordering by physical distance
+        n.mar length ave.spacing max.spacing
+1         104   54.0         0.5         2.3
+2          96   51.0         0.5         2.3
+3          91   88.9         1.0        24.9
+4          84   41.3         0.5         1.1
+5          83   54.3         0.7         2.9
+6          79   48.0         0.6         2.3
+7           1    0.0          NA          NA
+overall   538  337.5         0.6        24.9
+Saving cross and map df to /scratch/lmn3/becei/gmap_hifi/rqtl/gmap_hifi_q95_rimap_2.rda
+gmap_hifi_q95 Add duplicate markers
+gmap_hifi_q95 Order duplicate markers
+	gmap_hifi_q95 failed: no simple resolution
+	gmap_hifi_q95 failed: no simple resolution
+LG 1, span vs true span 0
+
+LG 2, span vs true span 0
+
+LG 3: Ctg016 dupe split over 1 junction
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3031 Ctg003.51  30.846  3      Ctg003 Ctg016.8401 1992776 2006693 Ctg016
+3032 Ctg003.51  30.846  3      Ctg003 Ctg016.8451 2006841 2051638 Ctg016
+3238  Ctg016.1  73.414  3      Ctg016       FALSE     719   13989 Ctg016
+        diff     cpos
+3031   14405 10851419
+3032   44945 10865484
+3238 2037649 13520798
+
+LG 3: Ctg016 setting 2 sus diffs > 1Mb to NA
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3022 Ctg003.51  30.846  3      Ctg003         end       0     718 Ctg016
+3023 Ctg003.51  30.846  3      Ctg003 Ctg016.8001 1904891 1921449 Ctg016
+3024 Ctg003.51  30.846  3      Ctg003 Ctg016.8051 1921697 1931675 Ctg016
+        diff     cpos
+3022       0  8858643
+3023 1920731 10763534
+3024   10226 10780340
+
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+3032 Ctg003.51  30.846  3      Ctg003 Ctg016.8451 2006841 2051638 Ctg016
+3238  Ctg016.1  73.414  3      Ctg016       FALSE     719   13989 Ctg016
+3239  Ctg016.1  73.414  3      Ctg016   Ctg016.51   14015   24941 Ctg016
+        diff     cpos
+3032      NA       NA
+3238 2037649 13520798
+3239   10952 13534094
+
+LG 3, span vs true span -71973
+
+LG 4: Ctg001 dupe split over 1 junction
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+5020 Ctg001.8501  31.881  4      Ctg001 Ctg001.8551 1250634 1255895 Ctg001
+5021 Ctg001.8501  31.881  4      Ctg001       FALSE 1243627 1250206 Ctg001
+5022 Ctg001.7801  32.436  4      Ctg001 Ctg001.8801 1286766 1298064 Ctg001
+      diff     cpos
+5020  5689 17619321
+5021 47858 17626328
+5022 11489 17669467
+
+LG 4: Ctg018 dupe split over 1 junction
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5427 Ctg015.1  40.786  4      Ctg015 Ctg018.4101 1475091 1516634 Ctg018   41637
+5428 Ctg015.1  40.786  4      Ctg015 Ctg018.4151 1516666 1531994 Ctg018   15360
+5429 Ctg018.1  41.337  4      Ctg018       FALSE   15054   80548 Ctg018 1451446
+         cpos
+5427 24752394
+5428 24793969
+5429 26295581
+
+LG 4: Ctg018 setting 2 sus diffs > 1Mb to NA
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5424 Ctg015.1  40.786  4      Ctg015         end       0   15053 Ctg018       0
+5425 Ctg015.1  40.786  4      Ctg015 Ctg018.4001 1453093 1466838 Ctg018 1451785
+5426 Ctg015.1  40.786  4      Ctg015 Ctg018.4051 1466978 1474997 Ctg018    8159
+         cpos
+5424 23277303
+5425 24730396
+5426 24744281
+
+       marker genetic lg marker_scaf        dupe   start     end   scaf    diff
+5428 Ctg015.1  40.786  4      Ctg015 Ctg018.4151 1516666 1531994 Ctg018      NA
+5429 Ctg018.1  41.337  4      Ctg018       FALSE   15054   80548 Ctg018 1451446
+5430 Ctg018.1  41.337  4      Ctg018   Ctg018.51   81328  158675 Ctg018   78127
+         cpos
+5428       NA
+5429 26295581
+5430 26361855
+
+LG 4, span vs true span 47419
+
+LG 5, span vs true span 0
+
+LG 6: Ctg011 dupe split over 1 junction
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+6590   Ctg011.1   0.000  6      Ctg011 Ctg011.2201 748367 756649 Ctg011   8428
+6591   Ctg011.1   0.000  6      Ctg011 Ctg011.2251 756757 768997 Ctg011  12348
+6592 Ctg011.751   0.554  6      Ctg011  Ctg011.701 430769 444916 Ctg011 324081
+        cpos
+6590  748368
+6591  756758
+6592 1082746
+
+LG 6, span vs true span -635814
+
+gmap_hifi_q95 After duplicate and termini addition:
+93.63 Mb ordered (17 contig)
+1.13 Mb genetically unorderable (3 contig)
+0.00 Mb ambiguous (0 contig)
+vs. assembly span 94.10 Mb (0.66 off)
+20 contigsgmap_hifi_q90 Test full reordering by physical distance
+gmap_hifi_q90: Of 17 contigs in the map, 0 are unorientable, 2 are discordant (spanning 0 and 5674095 bp)
+gmap_hifi_q90 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int [1:59] 10 1 1 1 1 2 1 1 1 1 ...
+  values : int [1:59] 1 3 -2 1 2 1 2 1 -2 4 ...
+
+[[2]]
+Run Length Encoding
+  lengths: int [1:60] 1 1 1 2 1 1 1 2 1 1 ...
+  values : int [1:60] 3 -2 1 2 -1 3 -1 2 1 -2 ...
+
+[[3]]
+Run Length Encoding
+  lengths: int [1:40] 1 3 1 1 1 1 21 1 1 1 ...
+  values : int [1:40] -9 -1 -25 2 -1 2 1 5 2 -1 ...
+
+[[4]]
+Run Length Encoding
+  lengths: int [1:37] 1 1 1 1 1 1 11 1 1 1 ...
+  values : int [1:37] -1 2 1 2 -1 2 1 2 -1 2 ...
+
+[[5]]
+Run Length Encoding
+  lengths: int [1:25] 8 1 1 1 8 1 1 1 4 1 ...
+  values : int [1:25] 1 2 -1 2 1 2 -1 2 1 2 ...
+
+[[6]]
+Run Length Encoding
+  lengths: int [1:47] 1 1 3 1 1 2 1 1 5 1 ...
+  values : int [1:47] -1 2 1 2 -1 2 -1 2 1 2 ...
+
+gmap_hifi_q90 likelihoods for new order
+LG 1: LOD 0.000, map length -0.000, order accepted
+LG 2: LOD 0.000, map length -0.000, order accepted
+	LG 3: LOD -8.772, map length -8.335, order rejected
+LG 4: LOD -0.000, map length -0.000, order accepted
+LG 5: LOD 0.000, map length 0.000, order accepted
+LG 6: LOD -0.002, map length 0.000, order accepted
+gmap_hifi_q90: Of 17 contigs in the map, 0 are unorientable, 1 are discordant (spanning 0 and 2096835 bp)
+gmap_hifi_q90 breaks: initial order vs. oriented order
+[[1]]
+Run Length Encoding
+  lengths: int 103
+  values : int 1
+
+[[2]]
+Run Length Encoding
+  lengths: int 95
+  values : int 1
+
+[[3]]
+Run Length Encoding
+  lengths: int [1:40] 1 3 1 1 1 1 21 1 1 1 ...
+  values : int [1:40] -9 -1 -25 2 -1 2 1 5 2 -1 ...
+
+[[4]]
+Run Length Encoding
+  lengths: int 83
+  values : int 1
+
+[[5]]
+Run Length Encoding
+  lengths: int 82
+  values : int 1
+
+[[6]]
+Run Length Encoding
+  lengths: int 78
+  values : int 1
+
+gmap_hifi_q90 likelihoods for new order
+LG 1: no change
+LG 2: no change
+	LG 3: LOD -8.772, map length -8.335, order rejected
+LG 4: no change
+LG 5: no change
+LG 6: no change
+gmap_hifi_q90 Test case-by-case reordering by physical distance
+LG 3 genetic conflict Ctg016-Ctg013-Ctg016: 10.938-0.618<->32.559-36.204 cM
+	err. bailing
+        n.mar length ave.spacing max.spacing
+1         104   55.9         0.5         2.6
+2          96   51.8         0.5         2.6
+3          91   77.7         0.9        15.3
+4          84   41.1         0.5         1.3
+5          83   56.0         0.7         1.9
+6          79   45.4         0.6         2.6
+7           1    0.0          NA          NA
+overall   538  327.8         0.6        15.3
+Saving cross and map df to /scratch/lmn3/becei/gmap_hifi/rqtl/gmap_hifi_q90_rimap_2.rda
+gmap_hifi_q90 Add duplicate markers
+gmap_hifi_q90 Order duplicate markers
+	gmap_hifi_q90 failed: no simple resolution
+	gmap_hifi_q90 failed: no simple resolution
+LG 1, span vs true span 0
+
+LG 2, span vs true span 0
+
+LG 3: Ctg016 dupe split over 6 junction
+          marker genetic lg marker_scaf  dupe   start     end   scaf    diff
+2366 Ctg016.8501       0  3      Ctg016   end 2068338 2096836 Ctg016   28499
+2367 Ctg016.8501       0  3      Ctg016 FALSE 2057078 2068337 Ctg016 1884513
+      cpos
+2366     1
+2367 11261
+
+          marker genetic lg marker_scaf  dupe   start     end   scaf    diff
+2366 Ctg016.8501   0.000  3      Ctg016   end 2068338 2096836 Ctg016      NA
+2367 Ctg016.8501   0.000  3      Ctg016 FALSE 2057078 2068337 Ctg016 1884513
+2368  Ctg016.651   8.509  3      Ctg016 FALSE  175837  183824 Ctg016   22502
+        cpos
+2366      NA
+2367   11261
+2368 1892502
+
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+2381 Ctg016.651   8.509  3      Ctg016 Ctg016.1301 358837 371156 Ctg016  15310
+2382 Ctg016.651   8.509  3      Ctg016 Ctg016.1351 371372 386466 Ctg016 283200
+2383 Ctg016.351   9.085  3      Ctg016       FALSE  92833 103266 Ctg016  20830
+        cpos
+2381 2075502
+2382 2088037
+2383 2366576
+
+         marker genetic lg marker_scaf       dupe  start    end   scaf   diff
+2387 Ctg016.351   9.085  3      Ctg016 Ctg016.551 151821 166217 Ctg016   7900
+2388 Ctg016.351   9.085  3      Ctg016 Ctg016.601 166255 174117 Ctg016 119538
+2389 Ctg016.151   9.703  3      Ctg016      FALSE  40165  54579 Ctg016  10375
+        cpos
+2387 2425564
+2388 2439998
+2389 2566088
+
+         marker genetic lg marker_scaf       dupe start   end   scaf  diff
+2391 Ctg016.151   9.703  3      Ctg016 Ctg016.251 65000 81421 Ctg016 11373
+2392 Ctg016.151   9.703  3      Ctg016 Ctg016.301 81641 92794 Ctg016 78805
+2393   Ctg016.1  10.320  3      Ctg016      FALSE   719 13989 Ctg016 10952
+        cpos
+2391 2590923
+2392 2607564
+2393 2688486
+
+        marker genetic lg marker_scaf        dupe   start     end   scaf
+2741 Ctg003.51  47.759  3      Ctg003 Ctg016.8401 1992776 2006693 Ctg016
+2742 Ctg003.51  47.759  3      Ctg003 Ctg016.8451 2006841 2051638 Ctg016
+2743 Ctg003.51  47.759  3      Ctg003         end       0     718 Ctg016
+        diff    cpos
+2741   44945 6974364
+2742 2050920 6988429
+2743       0 8995270
+
+LG 3, span vs true span -281738
+
+LG 4: Ctg001 dupe split over 1 junction
+          marker genetic lg marker_scaf        dupe   start     end   scaf
+3886 Ctg001.7801   8.658  4      Ctg001 Ctg001.8751 1278631 1286575 Ctg001
+3887 Ctg001.7801   8.658  4      Ctg001 Ctg001.8801 1286766 1298064 Ctg001
+3888 Ctg001.8501   9.276  4      Ctg001       FALSE 1243627 1250206 Ctg001
+      diff    cpos
+3886  8014 7131697
+3887 11489 7139832
+3888 47858 7182971
+
+LG 4, span vs true span -84227
+
+LG 5, span vs true span 0
+
+LG 6: Ctg011 dupe split over 1 junction
+         marker genetic lg marker_scaf        dupe  start    end   scaf   diff
+6590   Ctg011.1   0.000  6      Ctg011 Ctg011.2201 748367 756649 Ctg011   8428
+6591   Ctg011.1   0.000  6      Ctg011 Ctg011.2251 756757 768997 Ctg011  12348
+6592 Ctg011.751   0.616  6      Ctg011  Ctg011.701 430769 444916 Ctg011 324081
+        cpos
+6590  748368
+6591  756758
+6592 1082746
+
+LG 6, span vs true span -635814
+
+gmap_hifi_q90 After duplicate and termini addition:
+91.59 Mb ordered (16 contig)
+1.13 Mb genetically unorderable (3 contig)
+2.38 Mb ambiguous (0 contig)
+vs. assembly span 94.10 Mb (1.00 off)
+20 contigs

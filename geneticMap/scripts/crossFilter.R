@@ -10,15 +10,22 @@ require(parallel, quietly = T)
 require(ggplot2, quietly = T)
 require(data.table, quietly = T)
 
-# read tidy bug where single marker/scaf
-source('util/my_read_cross.R')
-nameSplitChar="." # markers are Ctg%%%.# (where # is bin number)
-maxsim = 0.95
-maxLineNA = 0.6
-maxMarkerNA = 0.3
-# LG ordering iterations
-nsamples = 50
+# functions to:
+# (1) filter genetic markers (binned pseudomarkers from RIL GBS)
+# (2) make a genetic map
+# (3) assess (and attempt to maximise) physical/genetic concordance
+# (4) output some stats to stdout
+#     a map (r/qtl)
+#     genetically ordered and oriented (where possible) assembly contigs/scaffolds.
+# The main functions are commented below.
 
+# read tidy bug where single marker/scaf
+source('scripts/my_read_cross.R')
+nameSplitChar="." # markers are Ctg%%%.# (where # is bin number)
+maxsim = 0.95     # maximum line similarity
+maxLineNA = 0.6   # maximum missing data per line
+maxMarkerNA = 0.3 # maximium missing data per marker
+nsamples = 50     # wihin linkage group ordering iterations
 
 ### utils ###
 updateErr <- function(cross, chrom){
@@ -27,7 +34,7 @@ updateErr <- function(cross, chrom){
     sum(sapply(tempmap, attr, "loglik"))
   }
   if(missing(chrom)) chrom=1:nchr(cross)
-  optimise(f=estErr, interval=c(5e-3, 1e-4), cross=cross, chrom=chrom, np=1, maximum=T)$max
+  optimise(f=estErr, interval=c(5e-2, 1e-4), cross=cross, chrom=chrom, np=1, maximum=T)$max
 }
 
 getTermini = function(s, y, ori){
@@ -56,7 +63,7 @@ getOri = function(y, gte=F, tol=0, dominant=F){
   # vector orientation
   # ascending=F
   y <- y[!is.na(y)]
-  if(len(y)<2) return(NA)
+  if(length(y)<2) return(NA)
   if(gte) mdiff = diff(y) >= -tol else mdiff = diff(y) > -tol
   if(all(mdiff)) return(F)
   if(all(!mdiff)) return(T)
@@ -102,7 +109,7 @@ startingMap <- function(WD, pref, XO_MAD_quantiles=c(0.9, 0.95, 0.99, 1)){
   mpos <- fread(sprintf('%s/bin50.markerpos.txt', WD))
   mpos$marker <- mpos$dupe <- paste(mpos$contig, mpos$b, sep=nameSplitChar)
   
-  # a few terminal markers are not in mpos
+  # terminal markers are dropped in mpos
   mar = colnames(pull.geno(cross))
   mterm = mar[!mar %in% mpos$marker]
   cross <- drop.markers(cross, markers = mterm)
@@ -118,7 +125,7 @@ startingMap <- function(WD, pref, XO_MAD_quantiles=c(0.9, 0.95, 0.99, 1)){
   cscaf = unique(unlist(lapply(pull.map(cross), function(x) tstrsplit(names(x), nameSplitChar, fixed = T)[[1]])))
   allscaf = unique(c(tagscaf, dupscaf, cscaf))
   fullen = sum(fai$len[fai$scaf %in% allscaf])
-  cat(sprintf('collapse %s dupes to %s tags (spanning %.2f Mb), %.2f covered by all %s marker scaffolds\n', len(unlist(dupes)), len(dupes), taglen/1e6, fullen/1e6, len(allscaf)))
+  cat(sprintf('collapse %s dupes to %s tags (spanning %.2f Mb), %.2f covered by all %s marker scaffolds\n', length(unlist(dupes)), length(dupes), taglen/1e6, fullen/1e6, length(allscaf)))
   cross <- drop.markers(cross, unlist(dupes))
   summary(cross)
   
@@ -162,11 +169,11 @@ startingMap <- function(WD, pref, XO_MAD_quantiles=c(0.9, 0.95, 0.99, 1)){
   todrop = names(mna)[mna < (nind(cross)*(1-maxMarkerNA))]
   keepchr = sapply(strsplit(names(mna)[!names(mna) %in% todrop], nameSplitChar, fixed = T), '[[', 1)
   dropchr <- unique(sapply(strsplit(todrop, nameSplitChar, fixed = T), '[[', 1))
-  if(len(dropchr)>0) {
+  if(length(dropchr)>0) {
     mrep = minrep = sum(!dropchr %in% unique(keepchr))
     minrep = min(sapply(dropchr, function(x) sum(keepchr==x)))
     lostd = sum(subset(fai, scaf%in%dropchr[!dropchr %in% keepchr])$len)
-    sprintf('dropping %s markers due to missing data (>%.2f), %s sole scaffold markers (%.2f Kb)', len(todrop), maxMarkerNA, mrep, lostd/1000)
+    sprintf('dropping %s markers due to missing data (>%.2f), %s sole scaffold markers (%.2f Kb)', length(todrop), maxMarkerNA, mrep, lostd/1000)
     cross <- drop.markers(cross, todrop)
     summary(cross)
   }
@@ -186,7 +193,7 @@ startingMap <- function(WD, pref, XO_MAD_quantiles=c(0.9, 0.95, 0.99, 1)){
   f = as.numeric(lod) > 2
   rfd = data.frame(x = as.numeric(rf)[f], y = as.numeric(lod)[f])
   p <- ggplot(rfd, aes(x, y)) + geom_point(alpha=0.5, stroke=0) + theme_classic() + labs(x="Recombination fraction", y="LOD score") + geom_rug()
-  ggsave(sprintf('%s/RF_LOD.png', WD))
+  ggsave(sprintf('%s/RF_LOD.pdf', WD))
   
   # check LOD ~ LGs
   lodr = range(round(quantile(rfd$y[rfd$x<0.25], c(0.5, 0.85), na.rm=T)))
@@ -205,7 +212,7 @@ startingMap <- function(WD, pref, XO_MAD_quantiles=c(0.9, 0.95, 0.99, 1)){
   # else the value that maximises the number of markers in the first 6 LGs
   lodlg = data.frame(lod=lodr, n, sixes, minlg, maxdross)
   print(lodlg)
-  stopifnot(max(lodlg$n)>6)
+  stopifnot(max(lodlg$n)>=6)
   if(sum(lodlg$n==6)>0){
     minLOD = min(lodlg$lod[lodlg$n==6])  
   } else {
@@ -326,41 +333,19 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
   #   and genetic map with duplicate markers inserted.
   #   iterated as in startingMap for line XO filtering (XO_MAD_quantiles)
   
-  if(len(grep('wtdb', pref))>0) cross = drop.markers(cross, c("Ctg048.1","Ctg050.1"))
-  
   # dupe list > df
   duped <- data.frame(dupe = unlist(dupeList), stringsAsFactors = F)
-  duped$marker <- rep(names(dupeList), sapply(dupeList, len))
+  duped$marker <- rep(names(dupeList), sapply(dupeList, length))
   duped$scaf<- unlist(lapply(strsplit(duped$dupe, nameSplitChar, fixed = T), '[[', 1))
   duped <- merge(duped, mpos[,c('dupe', 'start', 'end')], sort=F)
   duped <- duped[order(duped$marker, duped$start),]
   
-  getMarkerPos <- function(cross, mpos, lgs=1:6, manualResect=F){
-    
-    if(manualResect){
-      # split Ctg024
-      ix = mpos$contig=='Ctg024' & mpos$end < 962269; mpos$contig[ix] = 'Ctg024_1'
-      ix = mpos$contig=='Ctg024' & mpos$end >= 962269; mpos$contig[ix] = 'Ctg024_2'
-      
-      mapi = cross$geno[[6]]
-      colnames(mapi$data)[colnames(mapi$data) %in% mpos$marker[mpos$contig=='Ctg024_1']] = gsub("Ctg024", "Ctg024_1", colnames(mapi$data)[colnames(mapi$data) %in% mpos$marker[mpos$contig=='Ctg024_1']])
-      names(mapi$map)[names(mapi$map) %in% mpos$marker[mpos$contig=='Ctg024_1']] = gsub("Ctg024", "Ctg024_1", names(mapi$map)[names(mapi$map) %in% mpos$marker[mpos$contig=='Ctg024_1']])
-      colnames(mapi$data)[colnames(mapi$data) %in% mpos$marker[mpos$contig=='Ctg024_2']] = gsub("Ctg024", "Ctg024_2", colnames(mapi$data)[colnames(mapi$data) %in% mpos$marker[mpos$contig=='Ctg024_2']])
-      names(mapi$map)[names(mapi$map) %in% mpos$marker[mpos$contig=='Ctg024_2']] = gsub("Ctg024", "Ctg024_2", names(mapi$map)[names(mapi$map) %in% mpos$marker[mpos$contig=='Ctg024_2']])
-      cross$geno[[6]] = mapi
-      
-      mpos$marker[mpos$contig=='Ctg024_1'] = gsub("Ctg024", "Ctg024_1", mpos$marker[mpos$contig=='Ctg024_1'])
-      mpos$marker[mpos$contig=='Ctg024_2'] = gsub("Ctg024", "Ctg024_2", mpos$marker[mpos$contig=='Ctg024_2'])
-      mpos$dupe[mpos$contig=='Ctg024_1'] = gsub("Ctg024", "Ctg024_1", mpos$dupe[mpos$contig=='Ctg024_1'])
-      mpos$dupe[mpos$contig=='Ctg024_2'] = gsub("Ctg024", "Ctg024_2", mpos$dupe[mpos$contig=='Ctg024_2']) 
-      mpos$start[mpos$contig=='Ctg024_2'] = mpos$start[mpos$contig=='Ctg024_2']-962269
-      mpos$end[mpos$contig=='Ctg024_2'] = mpos$end[mpos$contig=='Ctg024_2']-962269
-    }
+  getMarkerPos <- function(cross, mpos, lgs=1:6){
     
     gmap <- pull.map(cross, chr = lgs)
     mapn = names(unlist(gmap))
     mapdf <- data.frame(genetic=as.numeric(unlist(gmap)), 
-                        ix = unlist(sapply(gmap, function(i) 1:len(i))),
+                        ix = unlist(sapply(gmap, function(i) 1:length(i))),
                         marker = gsub('^[1-9].', '', mapn),
                         lg = tstrsplit(mapn, '.', fixed = T)[[1]],
                         stringsAsFactors = F
@@ -414,7 +399,7 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
               ori1 = table(diff(scafx$start)>0)
               ori2 = table(diff(subset(xo, dupe==F)$start)>0)
               oris = ori1; if(max(ori2)>max(oris)) oris = ori2
-              stopifnot(len(oris)==2)
+              stopifnot(length(oris)==2)
               if(oris[1]>oris[2]){
                 # rev
                 xo = xo[order(xo$start, decreasing = T),]
@@ -466,9 +451,9 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
     od = orderByPhysWithinScaf(d)
     od = od[order(od$lg, od$ix),]
     sus = subset(od, ori<1)
-    suscaf=unique(sus[,c('scaf', 'ori')])
+    suscaf = unique(sus[,c('scaf', 'ori')])
     cat(sprintf('%s: Of %s contigs in the map, %s are unorientable, %s are discordant (spanning %s and %s bp)\n', 
-                pref, len(unique(od$scaf)), sum(suscaf$ori==0), sum(suscaf$ori>0), sum(subset(fai, scaf %in% suscaf$scaf[suscaf$ori==0])$len), sum(subset(fai, scaf %in% suscaf$scaf[suscaf$ori>0])$len)))
+                pref, length(unique(od$scaf)), sum(suscaf$ori==0), sum(suscaf$ori>0), sum(subset(fai, scaf %in% suscaf$scaf[suscaf$ori==0])$len), sum(subset(fai, scaf %in% suscaf$scaf[suscaf$ori>0])$len)))
     
     # check likelihoods for all changes
     # the oriented order is in column 'o'
@@ -522,14 +507,14 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
       jumps = sapply(names(disco), function(i) diff(range(which(rl$values==i))))
       dscaf = names(disco)[order(jumps)]
       k=1; it=1
-      while(len(dscaf)>0){
+      while(length(dscaf)>0){
         cix = which(rl$values==dscaf[k])
-        if(len(cix)>2) cix=cix[1:2]
+        if(length(cix)>2) cix=cix[1:2]
         inner = rl$value[(min(cix)+1):(max(cix)-1)]
         ixes = which(x$scaf==dscaf[k])
         ixes = ixes[ixes <= sum(rl$lengths[1:max(cix)])]
         ixg = diff(ixes)>1
-        ixl = ixes[1:which(ixg)]; ixr = ixes[(which(ixg)+1):len(ixes)]
+        ixl = ixes[1:which(ixg)]; ixr = ixes[(which(ixg)+1):length(ixes)]
         l = rev(ixl)[1]; ll = ixl[1]
         r = ixr[1]; rr = rev(ixr)[1]
         inix = (l+1):(r-1)
@@ -544,12 +529,12 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
         # x[(l-1):(r+1),]
         
         # if an outer is terminal, then see if we can clump it, else deal with the inners
-        if(len(inner)>1 & (min(ixl)==1 | max(ixr)==nrow(x))){
+        if(length(inner)>1 & (min(ixl)==1 | max(ixr)==nrow(x))){
           cat(sprintf('Terminal case\n'))
           cat(sprintf('LG %s genetic conflict %s-%s-%s: %.3f-%.3f<->%.3f-%.3f cM\n', lgx, dscaf[k], inner, dscaf[k], lgenc, lgen, rgen, rgenc))
           # small > large
-          nl = len(ixl)
-          nr = len(ixr)
+          nl = length(ixl)
+          nr = length(ixr)
           if(nr>=nl){
             lo = c(inix, ixl, r:nrow(x)); while(min(lo)>1) lo = c(min(lo)-1, lo)
             lik = compareorder(cross, chr=lgx, order = lo, map.function = 'morgan')[2,1]
@@ -570,7 +555,7 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
             }
           }
         } else {
-          if(len(igd)>1){
+          if(length(igd)>1){
             # conflict with genetic order
             cat(sprintf('LG %s genetic conflict %s-%s-%s: %.3f-%.3f<->%.3f-%.3f cM\n', lgx, dscaf[k], inner, dscaf[k], lgenc, lgen, rgen, rgenc))
             
@@ -580,6 +565,7 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
               oix = x$scaf %in% inner; oix[inix]=F
               go = mean(x$genetic[oix])
               ing = mean(x$genetic[inix])
+              if(any(is.na(c(go, ing)))) {cat('\terr. bailing\n'); break}
               lo = 1:nrow(x)
               if(ing > go){
                 # lo[ll:(r-1)] = c(inix, ll:l)
@@ -620,13 +606,13 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
         disco = rlt[rlt>1]
         dscafi = dscaf
         dscaf = NULL
-        if(len(disco)>0){
+        if(length(disco)>0){
           jumps = sapply(names(disco), function(i) min(diff(which(rl$values==i))))
           dscaf = names(disco)[order(jumps)]
         }
-        if(sum(dscafi %in% dscaf)==len(dscaf)) break
+        if(sum(dscafi %in% dscaf)==length(dscaf)) break
         it = it+1
-        k = min(len(dscaf), k+1)
+        k = min(length(dscaf), k+1)
       }
       x$o = 1:nrow(x)
       x
@@ -664,7 +650,7 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
       
       # get marker : dupe physical coordinates from dupe list
       duped <- data.frame(dupe = unlist(dupeList), stringsAsFactors = F)
-      duped$marker <- rep(names(dupeList), sapply(dupeList, len))
+      duped$marker <- rep(names(dupeList), sapply(dupeList, length))
       duped$scaf<- unlist(lapply(strsplit(duped$dupe, nameSplitChar, fixed = T), '[[', 1))
       duped <- merge(duped, mpos[,c('dupe', 'start', 'end')], sort=F)
       duped <- duped[order(duped$marker, duped$start),]
@@ -711,7 +697,7 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
           sx = x$scaf[1]
           # may be able to orient from duplicate genetic data
           # scafx = x[!duplicated(x$genetic),]
-          if(nrow(scafx)==1 & len(unique(x$genetic)>1)) {
+          if(nrow(scafx)==1 & length(unique(x$genetic)>1)) {
             udupe = subset(x, marker_scaf!=sx)
             scafx <- rbind(scafx, udupe[!duplicated(udupe$genetic),])
           }
@@ -740,7 +726,7 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
                 ori1 = table(diff(scafx$start)>0)
                 ori2 = table(diff(subset(xo, dupe==F)$start)>0)
                 oris = ori1; if(max(ori2)>max(oris)) oris = ori2
-                stopifnot(len(oris)==2)
+                stopifnot(length(oris)==2)
                 if(oris[1]>oris[2]){
                   # rev
                   ox = cbind(getTermini(sx, xo, T), ori=oris[1]/sum(oris), strand='-')
@@ -791,21 +777,21 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
         jumps = sapply(names(disco), function(i) diff(range(which(rl$values==i))))
         dscaf = names(disco)[order(jumps)]
         k=1; it=1
-        while(len(dscaf)>0 & it<3){
+        while(length(dscaf)>0 & it<3){
           cix = which(rl$values==dscaf[k])
-          if(len(cix)>2) cix=cix[1:2]
+          if(length(cix)>2) cix=cix[1:2]
           inner = rl$value[(min(cix)+1):(max(cix)-1)]
           # compare genetic/physical distances of inner to container
           # ixes = which(x$marker_scaf==dscaf[k])
           ixes = which(x$scaf==dscaf[k])
           ixes = ixes[ixes <= sum(rl$lengths[1:max(cix)])]
           ixg = diff(ixes)>1
-          ixl = ixes[1:which(ixg)]; ixr = ixes[(which(ixg)+1):len(ixes)]
+          ixl = ixes[1:which(ixg)]; ixr = ixes[(which(ixg)+1):length(ixes)]
           l = rev(ixl)[1]; ll = ixl[1]
           r = ixr[1]; rr = rev(ixr)[1]
           lg = x$genetic[l]; rg = x$genetic[r]
           igd = unique(x$genetic[(l+1):(r-1)])
-          if(len(igd)==1){
+          if(length(igd)==1){
             lgen = igd-lg; rgen = rg-igd
             lphy = sum(x$diff[ll:l]); rphy = sum(x$diff[r:rr])
             cat(sprintf('%s LG %s case %s %s-%s-%s: %.3f<cM>%.3f %.3f<kb>%.3f\n', 
@@ -815,9 +801,9 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
             # x[(l-1):(r+1),]
             # x[(l-10):(r+10),]
             xx = x[(ll):(rr),]
-            inrl = len(rle(xx$scaf)$values)
-            ax = xx[order(xx$scaf),]; ax = ax[order(ax$genetic),]; arl = len(rle(ax$scaf)$values)
-            dx = xx[order(xx$scaf, decreasing = T),]; dx = dx[order(dx$genetic),]; drl = len(rle(dx$scaf)$values)
+            inrl = length(rle(xx$scaf)$values)
+            ax = xx[order(xx$scaf),]; ax = ax[order(ax$genetic),]; arl = length(rle(ax$scaf)$values)
+            dx = xx[order(xx$scaf, decreasing = T),]; dx = dx[order(dx$genetic),]; drl = length(rle(dx$scaf)$values)
             
             if(arl < inrl) {
               x[ll:rr,] <- ax
@@ -838,7 +824,7 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
           jumps = sapply(names(disco), function(i) diff(range(which(rl$values==i))))
           dscaf = names(disco)[order(jumps)]        
           it = it+1
-          k = min(len(dscaf), k+1)
+          k = min(length(dscaf), k+1)
         }
         x
       }))
@@ -883,8 +869,8 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
             }
             # check for remaining sus large diffs
             lix = which(y$diff>1e6)
-            if(len(lix)>0){
-              cat(sprintf('LG %s: %s setting %s sus diffs > 1Mb to NA\n', y$lg[1], y$scaf[1], len(lix)))
+            if(length(lix)>0){
+              cat(sprintf('LG %s: %s setting %s sus diffs > 1Mb to NA\n', y$lg[1], y$scaf[1], length(lix)))
               for(i in lix){
                 print(y[(i-1):(i+1),-c(9:12)])
                 cat('\n')
@@ -914,39 +900,17 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
       }))
       rownames(ooo) = NULL
       
-      # sapply(split(d, d$lg), function(x) {rlt = table(rle(x$scaf)$values); len(rlt[rlt>1])})
-      # sapply(split(o, o$lg), function(x) {rlt = table(rle(x$scaf)$values); len(rlt[rlt>1])})
-      # sapply(split(oo, oo$lg), function(x) {rlt = table(rle(x$scaf)$values); len(rlt[rlt>1])})
+      # sapply(split(d, d$lg), function(x) {rlt = table(rle(x$scaf)$values); length(rlt[rlt>1])})
+      # sapply(split(o, o$lg), function(x) {rlt = table(rle(x$scaf)$values); length(rlt[rlt>1])})
+      # sapply(split(oo, oo$lg), function(x) {rlt = table(rle(x$scaf)$values); length(rlt[rlt>1])})
       ooo      
     }
     
-    # these last operations are for making final
-    # tweaks to the map, e.g., flagging/removing suspect markers,
-    # using additional data (genome alignments with other lines)
-    ###
-    updateOri <- function(d, scaf, ori){
-      
-      # change the order for a single scaffold
-      # ori is T=decreasing, F=ascending
-      ix = which(d$scaf==scaf)
-      exc = d[ix,]
-      if(ori){
-        exc = exc[order(exc$start, decreasing = T),]
-      } else {
-        exc = exc[order(exc$start),]
-      }
-      exc$ori = 1
-      d[ix,] = exc
-      d
-    }
-    
-    fixBadDiffs <- function(omap){
+    fixBadDiffs_NIC58_flye <- function(omap){
       
       # flye manual fixes
       # check full (marker+dupe) orientations
-      cori = sapply(split(omap, omap$scaf), function(x) {
-        getOri(x$start, gte=T)
-      })
+      cori = sapply(split(omap, omap$scaf), function(x) getOri(x$start, gte=T))
       # 6 cases with some trouble (marker ordering correct, but pattern of duplicates not)
       # 1 resolved, check alignments for the other 5 (all < 0.5cM changes)
       table(cori, useNA = 'al')
@@ -960,12 +924,13 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
       #           13.952cM Ctg007.8651 > Ctg007.8451,Ctg007.8351 (2697111-2641698) > 14.377 cM Ctg007.8601
       
       # Ctg010: - strand, 23.257cM dupes Ctg010.17351,17301,17251 (terminal at 2810169-3289292) < 22.834cM Ctg010.1
-
+      
       # Ctg011: - strand, 37.535cM dupe Ctg011.6401 < 37.010cM marker Ctg011.6351
       
       # Ctg015: - strand, 30.244cM dupe Ctg015.1201 < 29.825 Ctg015.1101
       
       # Ctg029: + strand, single marker, single dupe, resolvable
+      i=6; sus[i]; subi=subset(omap, scaf==sus[i]); rownames(subi)=NULL; plot(subi$cpos[-1], diff(subi$start)); ix = which(omap$scaf==sus[i])
       exc = omap[ix,]; exc = exc[order(exc$start, decreasing = T),]; exc$genetic[c(1, nrow(exc))] = sort(exc$genetic[c(1, nrow(exc))])
       exc$o = exc$o[order(exc$o)]; exc$diff = c(abs(diff(c(exc$start[1],exc$end[1]))), abs(diff(exc$start)))
       omap[ix,] = exc
@@ -975,144 +940,87 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
       omap
     }
     
-    manualOrder <- function(omap, unoi){
+    fixBadDiffs_NIC58_flye_stitch1 <- function(omap){
       
-      # use dominant orientation in JU1373
-      # this is relative to pseudochrom strand
-      # check with largest oriented scaf on each lg
-      # unambiguous for >90% (min aligned 52kb) of length, ignoring a few gene-sized discrepancies
-      indics = sapply(split(omap, omap$lg), function(x) sort(unique(x$scaf))[1])
-      pseudori = data.frame(lg = 1:6, ref_pori = c(F, T, F, T, T, T), ele = c(5, 1, 3, 4, 6, 2))
-      pseudori$ref_mori = sapply(indics, function(i) getOri(subset(omap, scaf==i)$start))
-      juori = data.frame(
-        scaf = unoi$scaf, 
-        pori = as.logical(factor(unoi$juori, labels=c(T,F)))
-      )
-      juori = plyr::join(juori, unique(omap[,c('scaf', 'lg')]))
-      juori = plyr::join(juori, pseudori)
-      juori$pori[juori$ref_pori!=juori$ref_mori] = !juori$pori[juori$ref_pori!=juori$ref_mori]
-      for(i in 1:nrow(juori)) omap = updateOri(omap, juori$scaf[i], juori$pori[i])
+      # flye manual fixes (joins from other pacbio ass)
+      # check full (marker+dupe) orientations
+      cori = sapply(split(omap, omap$scaf), function(x) getOri(x$start, gte=T))
+      table(cori, useNA = 'al')
+      sus = names(which(is.na(cori))); print(sus)
       
-      # update to elegans chromosome homologs
-      omap$chrom = factor(omap$lg, labels = pseudori$ele)
-      omap$chrom = factor(omap$chrom, levels=1:6)
-      omap = do.call(rbind, lapply(split(omap, omap$chrom), function(x) {x$o = 1:nrow(x); x}))
-      rownames(omap) = NULL
+      # stitched flye manual fixes
+      # 3 cases, all < 0.5cM
+      i=2; sus[i]; subi=subset(omap, scaf==sus[i]); rownames(subi)=NULL; plot(subi$cpos[-1], diff(subi$start)); ix = which(omap$scaf==sus[i])
+      # Ctg001: 2 dupes markers < 0.5cM out of order, leave
+      # Ctg012: 2 terminal dupes switched, but < 0.5cM. fix end pos, but otherwise leave
+      exc = omap[ix,]; exc = rbind(exc[1:162,], exc[166,], exc[163:165,])
+      exc$o = exc$o[order(exc$o)]; exc$diff = c(abs(diff(c(exc$start[1],exc$end[1]))), abs(diff(exc$start)))
+      exc$diff[164] = diff(c(exc$start[164], exc$end[164]))
+      omap[ix,] = exc
+      # Ctg019 large block of dupe markers OOO, again < 0.5cM
       
-      # recalc diff/cumsum
+      # update cumsum
+      omap = do.call(rbind, lapply(split(omap, omap$lg), function(x) {x$cpos[!is.na(x$diff)] = cumsum(x$diff[!is.na(x$diff)]); x}))
+      omap
+    }
+    
+    fixBadDiffs_NIC58_flye_stitch2 <- function(omap){
+      
+      # flye manual fixes (pacbio ass + 0cM gap spanning reads)
+      # check full (marker+dupe) orientations
+      cori = sapply(split(omap, omap$scaf), function(x) getOri(x$start, gte=T))
+      table(cori, useNA = 'al')
+      sus = names(which(is.na(cori))); print(sus)
+      
+      # stitched flye manual fixes
+      # 3 cases, all < 0.5cM
+      # same as before, presumably
+      # i=1; sus[i]; subi=subset(omap, scaf==sus[i]); rownames(subi)=NULL; plot(subi$cpos[-1], diff(subi$start)); ix = which(omap$scaf==sus[i])
+      # Ctg003: 1 marker (Ctg003.4051, 3360717 3425185) placed after 2 dupes (3426298 - 3526455), 0.42cM 
+      
+      # Ctg012: terminal dupes switched, 0.42cm. fix end pos, but otherwise leave
+      # dupes up to 540959 come after final marker up to 3292160
+      i=2; sus[i]; ix = which(omap$scaf==sus[i]); subi=omap[ix,]; rownames(subi)=NULL
+      # plot(subi$cpos[-1], diff(subi$start))
+      exc = subi; exc = rbind(exc[1:161,], exc[163,], exc[162,], exc[164:166,])
+      exc$o = exc$o[order(exc$o)]; exc$diff = c(abs(diff(c(exc$start[1],exc$end[1]))), abs(diff(exc$end)))
+      exc$diff[162:166] = exc$cpos[162:166] = NA
+      # plot(exc$diff)
+      # plot(cumsum(exc$diff)[-1], diff(exc$start))
+      # plot(exc$cpos, exc$genetic)
+      # set dominant ori and add scaforder
+      omap$strand = as.character(omap$strand)
+      exc$strand = as.character(factor(getOri(exc$start, dominant = T), levels=c(T,F), labels=c('+', '-')))
+      exc$ori = 1
+      omap[ix,] = exc
+      
+      # Ctg015 large block of dupe markers OOO, 0.42cM
+      # force into order
+      i=3; ix = which(omap$scaf==sus[i]); sus[i]; subi=omap[ix,]; rownames(subi)=NULL
+      # plot(subi$cpos[-1], diff(subi$start))
+      i=which(omap$marker=='Ctg015.201')
+      omap$diff[i] = omap$end[i]-omap$start[i]
+      omap$diff[i+1] = omap$end[i+1]-omap$start[i+1]
+      # update cumsum
+      rownames(omap)=NULL
       omap = do.call(rbind, lapply(split(omap, omap$lg), function(x) {
-        x$diff = c(1, abs(diff(x$end)))
-        x$diff[-1][x$scaf[2:nrow(x)] != x$scaf[1:(nrow(x)-1)]] = 1
-        x$cpos = cumsum(x$diff)
+        lgg = aggregate(data = x, genetic ~ scaf, median)
+        lgg = lgg[order(lgg$genetic),]
+        lgg$scafo = 1:nrow(lgg)
+        x = merge(x[,-which(names(x)=='scafo')], lgg[,c('scaf', 'scafo')], sort=F)
+        x = x[order(x$scafo, x$o),]
+        x$cpos[is.na(x$diff)] = NA
+        # x$diff[!is.na(x$diff)] = c(x$end[1], abs(diff(x$start[!is.na(x$diff)])))
+        x$cpos[!is.na(x$diff)] = cumsum(x$diff[!is.na(x$diff)])
         x
       }))
-      
       omap
     }
     
-    joinAss = function(omap){
-      
-      # even after including scaffolds (at 1x) in ra assembly,
-      # NIC58 Illumina scaffolds span 16 joins (min 10kb alignment on each side)
-      
-      joins <- fread(cmd=sprintf('grep -v "#" %s/linkers.f', WD))[,c(1,3:6,8,9)]
-      names(joins) = c('q', 'q.start', 'q.end', 'strand', 'fa', 't.start', 't.end')
-      
-      checkj = do.call(rbind, lapply(split(joins, joins$q), function(x) {
-        x = merge(fai, x)
-        x$fa = sprintf('Ctg%.3i', as.numeric(gsub('Ctg', '',x$fa)))
-        mapix = which(omap$scaf %in% x$scaf)
-        l = min(mapix); r = max(mapix)
-        mapx = omap[l:r,]
-        x$q.allen = x$q.end-x$q.start
-        ctgal <- aggregate(data = x, q.allen ~ scaf, sum)
-        # data.frame(q=x$q[1], t=x$scaf[1], fa1=x$fa[1], fa2=rev(x$fa)[1], minal=min(ctgal$q.allen)/1e3, nlg=len(table(mapx$lg)), lg=mapx$lg[1], phys=diff(range(mapx$cpos))/1e6, genetic=diff(range(mapx$genetic)), pgr = (diff(range(mapx$cpos))/1e6)/diff(range(mapx$genetic)), stringsAsFactors = F)
-        data.frame(q=x$q[1], t1=x$fa[1], t2=rev(x$fa)[1], s1 = x$strand[1], s2 = rev(x$strand)[1], cM=median(mapx$genetic), minal=min(ctgal$q.allen)/1e3, chrom=mapx$chrom[1], p_span=round(diff(range(mapx$cpos))/1e6, 1), g_span=round(diff(range(mapx$genetic)),1), stringsAsFactors = F)
-      }))
-      rownames(checkj) = NULL
-      (checkj = checkj[order(checkj$chrom, checkj$cM),])
-      
-      # cf JU1373, take if junction and orientation agree
-      # all do, where present
-      agree = c(1,
-                1, 1, 
-                1, 1, 1, 1, 1, 1, 1, 
-                1, NA,
-                1, 1,
-                1, 1
-      )
-      # Ctg128 (69kb) invariant, but does align (inverted near midpoint) to III
-      # Ctg85 (178kb) barely aligns to JU1373 (~800bp), and is invariant. NIC58 unique at 25.63 cM on IV?
-      # NB: Ctg32 (1Mb) aligns to left tip of JU1373 X, but completely shattered
-      
-      # check if same orientation in the map.
-      # yep, all cases agree with the pseudochromosome alignment order.
-      checkj$sori = apply(sapply(1:nrow(checkj), function(i) {
-        o1 = getOri(subset(omap, scaf==checkj$t1[i])$start, dominant = T)
-        o2 = getOri(subset(omap, scaf==checkj$t2[i])$start, dominant = T)
-        c(o1, o2)
-      }), 2, function(j) j[1]==j[2])
-      
-      # for now, just merge contig names.
-      # attempt local assembly at these junctions.
-      
-      require(igraph)
-      tojoin = na.exclude(checkj)
-      jg = graph.data.frame(tojoin[,c('t1', 't2')])
-      comp = components(jg)$membership
-      omap$pscaf = omap$scaf
-      for(i in unique(comp)){
-        ix = sort(which(omap$scaf %in% names(comp)[comp==i]))
-        j = paste(unique(omap$pscaf[ix]), collapse = '_')
-        print(j)
-        omap$pscaf[ix] = j
-      }
-      
-      omap
-    }
-    ###
-    
-    # add duplicates, sort ascending by LG, physical marker position in contig
-    cat(sprintf('%s Add duplicate markers\n', pref))
-    d = mapd = addDupes(cross, dupeList, mpos)
-    
-    # order duplicates first within contigs, then LGs
-    # add terminal contig positions and cumulative physical positions
-    # along the linkage groups
-    # (this can be > assembly span if there are map errors)
-    cat(sprintf('%s Order duplicate markers\n', pref))
-    omap <- orderDupes(mapd)
-    
-    ## NIC58: 5/6 cases irreconcilable phys/genetic discordance, but all < 0.5cM
-    # omap <- fixBadDiffs(omap)
-    
-    osum = aggregate(data = omap, diff~ori, sum)
-    if(!0 %in% osum$ori) osum = rbind(osum, data.frame(ori=0, diff=0))
-    if(sum(osum$ori %% 1)==0) osum = rbind(osum, data.frame(ori=0.5, diff=0))
-    orit = table(factor(c(0,1,0.5))); orit[]=0
-    ot = table(unique(omap[,c('scaf', 'ori')])$ori)
-    if('0' %in% names(ot)) orit[1] = ot[names(ot)=='0']
-    if(len(ot[as.numeric(names(ot)) %% 1])>0) orit[2] = ot[as.numeric(names(ot)) %% 1 > 0]
-    if('1' %in% names(ot)) orit[3] = ot[names(ot)=='1']
-    
-    cat(sprintf('%s After duplicate and termini addition:\n%.2f Mb ordered (%s contig)\n%.2f Mb genetically unorderable (%s contig)\n%.2f Mb ambiguous (%s contig)\nvs. assembly span %.2f Mb (%.2f off)\n%s contigs', 
-                pref,
-                osum$diff[osum$ori==1]/1e6,
-                orit[3],
-                osum$diff[osum$ori==0]/1e6, 
-                orit[1],
-                osum$diff[osum$ori%%1>0]/1e6, 
-                orit[2],
-                sum(fai$len[fai$scaf %in% omap$scaf])/1e6,
-                (sum(osum$diff)-sum(fai$len[fai$scaf %in% omap$scaf]))/1e6, 
-                len(unique(omap$scaf))
-    ))
-    
-    dumpJunctions <- function(){
+    dumpJunctions_NIC58_flye <- function(omap){
       # dump unoriented contigs for 
-      # 1. manually checking the repeat graph
-      # 2. check other assemblies
-      # 3. local reassembly if required
+      # 1. checking against other assemblies
+      # 2. local reassembly if required
       # all are on tips flanked by larger sequences (2 for Ctg008 and Ctg011, 1 for Ctg023)
       buffcM = 1
       unori = merge(merge(data.frame(scaf=sort(unique(subset(omap, ori!=1)$scaf))), fai), unique(omap[,c('lg', 'scaf', 'genetic', 'marker_scaf')]))
@@ -1136,6 +1044,49 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
       fwrite(umap, file = sprintf('%s/%s_orderedContigs.csv', WD, pref))
     }
     
+    # add duplicates, sort ascending by LG, physical marker position in contig
+    cat(sprintf('%s Add duplicate markers\n', pref))
+    d = mapd = addDupes(cross, dupeList, mpos)
+    
+    # order duplicates first within contigs, then LGs
+    # add terminal contig positions and cumulative physical positions
+    # along the linkage groups
+    # (this can be > assembly span if there are map errors)
+    cat(sprintf('%s Order duplicate markers\n', pref))
+    omap <- orderDupes(mapd)
+    
+    ## NIC58 round 1: 5/6 cases irreconcilable phys/genetic discordance, but all < 0.5cM
+    # omap <- fixBadDiffs_NIC58_flye(omap)
+    ## NIC58 round 3: 3 cases irreconcilable phys/genetic discordance, but all < 0.5cM
+    # omap <- fixBadDiffs_NIC58_flye_stitch1(omap)
+    # omap <- fixBadDiffs_NIC58_flye_stitch2(omap)
+    
+    osum = aggregate(data = omap, diff~ori, sum)
+    if(!0 %in% osum$ori) osum = rbind(osum, data.frame(ori=0, diff=0))
+    if(sum(osum$ori %% 1)==0) osum = rbind(osum, data.frame(ori=0.5, diff=0))
+    orit = table(factor(c(0,1,0.5))); orit[]=0
+    ot = table(unique(omap[,c('scaf', 'ori')])$ori)
+    if('0' %in% names(ot)) orit[1] = ot[names(ot)=='0']
+    if(length(ot[as.numeric(names(ot)) %% 1])>0) orit[2] = ot[as.numeric(names(ot)) %% 1 > 0]
+    if('1' %in% names(ot)) orit[3] = ot[names(ot)=='1']
+    
+    cat(sprintf('%s After duplicate and termini addition:\n%.2f Mb ordered (%s contig)\n%.2f Mb genetically unorderable (%s contig)\n%.2f Mb ambiguous (%s contig)\nvs. assembly span %.2f Mb (%.2f off)\n%s contigs', 
+                pref,
+                osum$diff[osum$ori==1]/1e6,
+                orit[3],
+                osum$diff[osum$ori==0]/1e6, 
+                orit[1],
+                osum$diff[osum$ori%%1>0]/1e6, 
+                orit[2],
+                sum(fai$len[fai$scaf %in% omap$scaf])/1e6,
+                (sum(osum$diff)-sum(fai$len[fai$scaf %in% omap$scaf]))/1e6, 
+                length(unique(omap$scaf))
+    ))
+    
+    # write out any unoriented junctions and estimated genetic gaps
+    # dump a stranded bed file for converting to pseudochromosomes
+    dumpJunctions_NIC58_flye(omap)
+    
     omap
   }
   
@@ -1146,14 +1097,8 @@ geneticPhysicalConcordance <- function(cross, dupeList, fai, mpos, pref, gterr=5
 
 startingMap(WD, pref)
 
-# add strand
-# WD='/Volumes/scratch/ctrop/gmap/NIC58_ref/cfass/flye/rqtl'; pref='flye'; q=1; dupeList=dupes
-# load(sprintf('%s/%s_q%s_rimap_2.rda', WD, pref, q*100))
-# save(cross, dupes, duped, gterr, fai, mpos, mapdf, mm, file = sprintf('%s/%s_q%s_rimap_3.rda', '~/Documents/ctrop/papers/1_geneticMap/', pref, q*100))
-
 load(sprintf('%s/%s_rimap_1.rda', WD, pref))
-
-for(q in c(1, 0.99, 0.95)){
+for(q in c(1, 0.99, 0.95, 0.9)){
   opref = sprintf('%s_q%s', pref, q*100)
   load(sprintf('%s/%s_bestOrders_LL.rda', WD, opref))
   geneticPhysicalConcordance(rcross, dupes, fai, mpos, opref)
@@ -1161,7 +1106,7 @@ for(q in c(1, 0.99, 0.95)){
 
 gatherStats <- function(WD, pref, q=1){
   
-  # useful stats
+  # compile some useful stats across assemblies
   load(sprintf('%s/%s/rqtl/%s_q%s_rimap_3.rda', WD, pref, pref, q*100), verbose = T)
   
   PD=sprintf('%s/%s', WD, pref)
@@ -1201,7 +1146,7 @@ gatherStats <- function(WD, pref, q=1){
        bubbles = sum(mapBubbles),
        bubbled_LG = sum(mapBubbles>0),
        LG_splits = nrow(splitCtg),
-       n_map_contigs = len(unique(mm$scaf)),
+       n_map_contigs = length(unique(mm$scaf)),
        map_fai = list(fai),
        original_fai = list(ofai),
        nSNP = dSNPS[2],

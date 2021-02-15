@@ -9,7 +9,7 @@ SITES=$DIR/snp.sites.bed
 # variable sequences
 cut -f1 $SITES | uniq > $DIR/vscaf
 # ... and their lengths (>1kb)
-util/lookup.py -k $REF.fai -rc 2 -s $DIR/vscaf | sort -k2,2gr | awk '($2>1000)' > $DIR/uvscaf
+scripts/lookup.py -k $REF.fai -rc 2 -s $DIR/vscaf | sort -k2,2gr | awk '($2>1000)' > $DIR/uvscaf
 ln -s $DIR/uvscaf msg.chrLengths
 
 NSEQ=$(cat $REF.fai | wc -l)
