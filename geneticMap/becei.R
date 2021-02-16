@@ -9,7 +9,7 @@ gmap <- function(){
   getMarkerPos <- function(cross, mpos, nameSplitChar='.', lgs=1:6){
     
     gmap <- pull.map(cross, chr = lgs)
-    mapn = names(unlist(gmap))
+    mapn = unlist(lapply(gmap, names))
     mapdf <- data.frame(genetic=as.numeric(unlist(gmap)), 
                         ix = unlist(sapply(gmap, function(i) 1:length(i))),
                         marker = gsub('^[1-9].', '', mapn),
@@ -254,11 +254,13 @@ gmap <- function(){
   
   # elegans homologs
   # reorder cross
-  fai$chrom = factor(fai$fa, labels = c(6, 5, 2, 4, 1, 3))
-  fai$chrom = factor(fai$chrom, levels = 1:6)
-  fai$lg = c(2,3,5,6,4,1)
-  names(cross$geno) = fai$chrom[order(fai$lg)]
-  cross$geno = cross$geno[order(names(cross$geno))]
+  fai = fai[order(fai$fa),]
+  fai$chrom = c(5, 2, 1, 6, 3, 4)
+  fai = fai[order(fai$chrom),]
+  fai$chromr = romanChroms()
+  fai = fai[order(fai$scaf),]
+  names(cross$geno) = fai$chromr
+  cross$geno = cross$geno[order(fai$chrom)]
   
   # RF
   cross <- est.rf(cross)
@@ -298,11 +300,9 @@ gmap <- function(){
     scale_fill_brewer('', palette ='Dark2')
   ggsave('~/Documents/github/becei/geneticMap/geno_props.pdf', h=3, w=6)
   
-  
   # marey
-  cross <- flip.order(cross, chr=c(1,2,6))
-  mapdf = getMarkerPos(cross, mpos)
-  mapdf$chrom = mapdf$lg
+  cross <- flip.order(cross, chr=c('I', 'III', 'V'))
+  mapdf = merge(getMarkerPos(cross, mpos, lgs = romanChroms()), fai)
   p <- ggplot(mapdf, aes(start/1e6, genetic)) + geom_point(size=1, alpha=.75, stroke=0) + facet_grid(.~chrom, scales = 'free', space='free') + theme_classic() + 
     labs(x='Physical distance (Mb)', y='Genetic distance (cM)') + scale_x_continuous(n.breaks = 3) +
     theme(legend.position = 'top', axis.line = element_blank(), strip.background = element_blank(), panel.border = element_rect(fill = NA), panel.spacing = unit(1, 'mm'), legend.margin = margin(0, 0, -5, 0))
@@ -314,6 +314,5 @@ gmap <- function(){
   ggsave('~/Documents/github/becei/geneticMap/marey_fixed.pdf', h=4, w=8)
   
   save(cross, mapdf, dupes, file = '~/Documents/github/becei/geneticMap/becei_geneticMap.RData')
-  
   
 }

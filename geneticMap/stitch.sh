@@ -539,8 +539,7 @@ done
 # dominant strand
 for i in {1..6}; do 
     echo $i
-    ctg=$(printf '|%s' $(awk -v L=$i '($7==L)' $BED | cut -f1) | cut -c2-)
-    grep -E $ctg NIC58_WS220.paf | awk '($3>($2*0.25) && $4<($2*0.75))' |\
+    grep "LG${i}" elegans.paf | awk '($12==60)' | awk '($3>($2*0.25) && $4<($2*0.75))' |\
         awk '{a[$5]+=$11} END {for (i in a) print i, a[i]}' | sort -k2,2gr
 done
 
@@ -552,5 +551,15 @@ fastaSubsetSingle.py "LG4" polished.fa | sed 's/LG4/X/' > out6.fa
 fastaSubsetSingle.py "LG5" polished.fa | sed 's/LG5/III/' > out3.fa
 fastaSubsetSingle.py "LG6" polished.fa | sed 's/LG6/IV/' > out4.fa
 cat out*.fa > QG2082_genome_15022021.fa
+
+
+# get HiC contacts
+~/bin/juicer/misc/generate_site_positions.py DpnII QG2082_genome_15022021 references/QG2082_genome_15022021.fa
+
+G=QG2082_genome_15022021
+scripts/juicer.sh -g $G -t 20 -s DpnII -D `pwd` \
+    -y `pwd`/restriction_sites/${G}_DpnII.txt \
+    -p `pwd`/references/$G.sizes \
+    -z `pwd`/references/$G.fa &> hic.log &
 
 
