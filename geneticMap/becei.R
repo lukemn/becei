@@ -328,3 +328,57 @@ gmap <- function(){
   save(cross, mapdf, dupes, file = '~/Documents/github/becei/geneticMap/becei_geneticMap.RData')
   
 }
+
+segmentDomains <- function(){
+  
+  load('~/Documents/github/becei/geneticMap/becei_geneticMap.RData', verbose=T)
+  
+  require(strucchange)
+  require(segmented)
+  
+  o = mapdf[order(mapdf$chrom, mapdf$start),]
+  # standardize to markers per chrom equally spaced in physical distance
+  nMarkersPerChrom=200
+  sampleMarkers <- function(x){
+    ox = data.frame(chrom = x$chrom[1], start = as.integer(seq(1, max(x$start), length.out = nMarkersPerChrom)))
+    ox$genetic = approx(x$start, x$genetic, xout = ox$start, rule = 2)$y
+    ox
+  }
+  o = do.call(rbind, lapply(split(o, o$chrom), function(x) sampleMarkers(x)))
+  
+  doms =  do.call(rbind, lapply(1:6, function(i) {
+    subo = subset(o, chrom==i)
+    subo = subset(subo, genetic>0 & genetic<max(subo$genetic))
+    bp = breakpoints(genetic~start, data=subo, breaks=2)
+    oo = data.frame(apply(confint(bp, breaks=2, level=0.999)$conf+1, 2, function(x) subo$start[x]))
+    names(oo) = c('bp.l', 'bp', 'bp.r')
+    oo = cbind(chrom = i, j = c('l', 'r'), oo, method='struc')
+    
+    fit <- lm(genetic~start, subo)
+    segfit <- segmented(fit, seg.Z = ~start, npsi=2)
+    segfit = as.data.frame(confint.segmented(segfit, level = 0.999))
+    names(segfit) = c('bp', 'bp.l', 'bp.r')
+    oo = rbind(oo, cbind(chrom = i, j = c('l', 'r'), segfit, method='seg'))
+  }))
+  row.names(doms) = NULL
+  
+  # bps are ~identical except for X. 
+  # take seg method
+  o$chromr = factor(o$chrom, labels = romanChroms())
+  doms$chromr = factor(doms$chrom, labels = romanChroms())
+  ggplot(o, aes(start/1e6, genetic)) + geom_point(stroke=0, alpha=0.5) + theme_classic() + facet_grid(.~chromr, scales='free') +
+    geom_vline(data = doms, aes(xintercept=bp/1e6, col = method)) + 
+    geom_vline(data = doms, aes(xintercept=bp.l/1e6, col = method), linetype=2) + 
+    geom_vline(data = doms, aes(xintercept=bp.r/1e6, col = method), linetype=2) + 
+    theme(legend.position = 'top', strip.background = element_blank()) + 
+    labs(x = 'Physical position (Mb)', y = "Genetic position (cM)") +
+    scale_x_continuous(n.breaks = 3)
+  ggsave('~/Documents/github/becei/geneticMap/marey_breakpoints.pdf', h=4, w=8)
+  fwrite(doms, file = '~/Documents/github/becei/geneticMap/domains.csv')
+  
+  
+  
+  
+  
+  
+}
