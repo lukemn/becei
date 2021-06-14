@@ -313,6 +313,18 @@ gmap <- function(){
     theme(legend.position = 'top', axis.line = element_blank(), strip.background = element_blank(), panel.border = element_rect(fill = NA), panel.spacing = unit(1, 'mm'), legend.margin = margin(0, 0, -5, 0))
   ggsave('~/Documents/github/becei/geneticMap/marey_fixed.pdf', h=4, w=8)
   
+  # cf selfers
+  load('~/Documents/ctrop/selfer_maps.RData')
+  mapn = do.call(rbind, lapply(split(mapdf, mapdf$chrom), function(x) cbind(x, gnorm = x$genetic/max(x$genetic), pnorm = x$start/max(x$start))))
+  mapn = rbind(cbind(mapn[,c('pnorm', 'gnorm')], chrom=mapn$chromr, sp='becei'), gcf[,c('chrom', 'pnorm', 'gnorm', 'sp')])
+  p <- ggplot(mapn, aes(pnorm, gnorm, col=sp)) + geom_point(size=1, alpha=.5, stroke=0) + geom_line() + facet_grid(.~chrom, scales = 'free', space='free') + theme_classic() + 
+    labs(x='Normalized physical distance', y='Normalized genetic distance') + scale_x_continuous(expand=c(0.01,0.01), breaks = c(0,1)) + 
+    scale_y_continuous(expand=c(0.01,0.01), breaks = c(0,1)) + scale_color_manual('', values = c('black', selfer_pal$col), labels = c('outcrosser', expression(italic(C.~briggsae)), expression(italic(C.~elegans)), expression(italic(C.~tropicalis)))) + 
+    theme(legend.position = 'top', axis.text = element_blank(), axis.line = element_blank(), strip.background = element_blank(), panel.border = element_rect(fill = NA), axis.ticks = element_blank(), panel.spacing = unit(1, 'mm'), legend.margin = margin(0, 0, -5, 0)) + 
+    guides(color = guide_legend(override.aes = list(alpha=1, size=3, shape=19)))
+  ggsave('~/Dropbox/Apps/Overleaf/lille/marey_fixed.png', h=4, w=8, dpi=300)
+  
+  
   save(cross, mapdf, dupes, file = '~/Documents/github/becei/geneticMap/becei_geneticMap.RData')
   
 }

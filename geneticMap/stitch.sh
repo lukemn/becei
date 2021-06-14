@@ -235,7 +235,7 @@ H=LG${LG}_J${J}
 ln -fs merged_${H}.fasta ${H}.stitch.fa
 LGconsensus ${H}.stitch.1 ${H}.stitch.fa
 for i in {1..8}; do LGconsensus ${H}.stitch.$((i+1)) ${H}.stitch.${i}.cons.fa; done
-# doesn't converge to 0 varianst added, and q stats rise slightly
+# doesn't converge to 0 variants added, and q stats rise slightly
 # pseudochromosome
 echo ">LG$LG" > lg$LG.pchrom.fa
 grep -v ">" LG3_J1.stitch.5.cons.fa | tr -d "\n" | fold >> lg$LG.pchrom.fa
@@ -554,6 +554,7 @@ cat out*.fa > QG2082_genome_15022021.fa
 
 
 # get HiC contacts
+module load jdk/11.0.9
 ~/bin/juicer/misc/generate_site_positions.py DpnII QG2082_genome_15022021 references/QG2082_genome_15022021.fa
 
 G=QG2082_genome_15022021

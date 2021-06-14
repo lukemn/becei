@@ -23,20 +23,33 @@ singularity run --nv -B /usr/lib/locale/:/usr/lib/locale/  \
     --intermediate_results_dir `pwd`/test deepvariant_1.1.0-gpu.sif
 
 
+SIF=/scratch/work/public/singularity/deepvariant-1.1.0.sif
+REF=m10.map.ctg.fa
+BAM=m10.map.ctg_HiC_F.sorted.bam
+
+singularity exec --bind `pwd` $SIF \
+    /opt/deepvariant/bin/run_deepvariant \
+    --model_type=WGS \
+    --ref=$REF \
+    --reads=$BAM \
+    --output_vcf=`basename $BAM .sorted.bam`.dpv.vcf  \
+    --output_gvcf=`pwd`/test/output.g.vcf.gz \
+    --logging_dir=`pwd` \
+    --num_shards=8
 
 
 
 PSTOOLS=/home/lmn3/bin/DipAsm/pstools
 # new binary from shilpa
 PSTOOLS=/home/lmn3/bin/DipAsm/pstools_1
-NP=16
+NP=24
 WD=/scratch/lmn3/becei/
 GFA=$WD/hifi/hifiasm/hap/QG2082.r_utg.gfa
 R1=$WD/hic/fastq/QG2082_F.fastq.gz
 R2=$WD/hic/fastq/QG2082_R.fastq.gz
+TIG=QG2082.r_utg.fa
 
 # lmn3@cs006:/scratch/lmn3/becei/hic/dipasm$ 
-TIG=QG2082.r_utg.fa
 awk '/^S/{print ">"$2;print $3}' $GFA > $TIG
 
 # lmn3@cs006:/scratch/lmn3/becei/hic/dipasm$ 
@@ -67,8 +80,23 @@ mkdir mappedQ && cd mappedQ
 awk '($12>50)' ../mapped/QG2082_pr.paf | cut -f1 | sort | uniq > utg
 
 # try on hifiasm primary contigs, rather than raw unitigs?
+# nope. similar size
 mkdir primary && cd primary
+TIG=QG2082.p_utg.fa
+ln -s $WD/hifi/subassemblies/hifiasm.map.ctg.fa $TIG
 
+# is the HiC data adding lots of contamination?
+# map back to the genetic map
+minimap2 -t $NP -x asm5 QG2082.p_utg.fa pred_hap1.fa > hap1.paf
+minimap2 -t $NP -x asm5 QG2082.p_utg.fa pred_hap2.fa > hap2.paf
+minimap2 -t $NP -x asm5 QG2082.p_utg.fa pred_broken_nodes.fa > broken.paf
+
+for i in hap1 hap2 broken; do 
+awk '($12>50 && $11 > 50000)' $i.paf | cut -f1 | sort | uniq > $i.tig
+fastaSubset.py $i.tig pred_${i}.fa $i.tig.fa
+done
+
+~/bin/mummer-4.0.0rc1/nucmer -t $NP --maxmatch -l 100 -c 500 $TIG hap1.tig.fa -p hap1
 
 
 
