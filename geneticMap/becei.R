@@ -382,3 +382,45 @@ segmentDomains <- function(){
   
   
 }
+
+div <- function(){
+  
+  # raw variants for inbred samples mapped to chromosomes
+  hd = names(fread(cmd='gunzip -c ~/Documents/becei/genome/parental.vcf.gz | grep "#CHR"'))
+  bcv = fread(cmd='gunzip -c ~/Documents/becei/genome/parental.vcf.gz | grep -v "#"')
+  bsnp = bcv[,c(1,2,4,5,6)]
+  names(bsnp) = c('chrom', 'pos', 'ref', 'alt', 'qual')
+  dials = nchar(bsnp$ref)==nchar(bsnp$alt) & nchar(bsnp$ref)==1
+  bcv = bcv[dials,10:12]
+  bsnp = bsnp[dials]
+  bcv = apply(bcv, 2, function(x) sapply(tstrsplit(x, ':')[[1]], function(z) sum(as.numeric(strsplit(z, '/')[[1]]))))
+  colnames(bcv) = hd[10:12]
+  cor(bcv, use='pair')
+  # merge QG2083 (discard if inconsistent)
+  ix = unlist(mclapply(1:nrow(bcv), mc.cores = 2, function(i) {
+    x = bcv[i,2:3]
+    if(sum(is.na(x))==1) {
+      x[!is.na(x)]
+    } else {
+      if(sum(is.na(x))==2) {
+        NA  
+      } else {
+        if(length(unique(x))==1) {
+          x[1]
+        } else {
+          9
+        }  
+      }
+    }
+  }))
+  table(ix)
+  bsnp = cbind(bsnp, QG2083=ix)[bcv[,1]==0 & !ix %in% c(0, 9),]
+  qplot(bsnp$qual)
+  
+  ggplot(subset(bsnp, qual>200), aes(floor(pos/1e6), QG2083)) + stat_summary() + facet_grid(.~chrom, scales='free')
+  
+  
+  
+  
+  
+}
